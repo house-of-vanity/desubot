@@ -22,3 +22,4 @@ futures = "0.3"
 hyper-rustls = { version = "0.19", optional = true }
 
 rusqlite = "0.24.1"
+html-escape = "0.2"
