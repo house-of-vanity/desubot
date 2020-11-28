@@ -1,0 +1,24 @@
+[package]
+name = "desubot"
+version = "0.1.0"
+authors = ["AB <ab@hexor.ru>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bytes = "0.5"
+tokio = { version = "0.2", features = ["full"]}
+
+tracing = "0.1.9"
+tracing-futures = "0.2"
+multipart = { version = "0.16", default-features = false, features = ["client"] }
+
+telegram-bot = "0.8.0"
+
+hyper = "0.13"
+hyper-tls = { version = "0.4", optional = true  }
+futures = "0.3"
+hyper-rustls = { version = "0.19", optional = true }
+
+rusqlite = "0.24.1"
