@@ -1,15 +1,19 @@
-use std::env;
+use std::{env,process};
 
 use futures::StreamExt;
+use reqwest;
 use telegram_bot::types::chat::MessageChat;
 use telegram_bot::*;
+#[macro_use]
+extern crate log;
+use env_logger::Env;
 
 mod commands;
 mod db;
 mod errors;
 mod utils;
 
-async fn handler(api: Api, message: Message) -> Result<(), Error> {
+async fn handler(api: Api, message: Message, token: String) -> Result<(), errors::Error> {
     match message.kind {
         MessageKind::Text { ref data, .. } => {
             let title = utils::get_title(&message);
@@ -27,16 +31,106 @@ async fn handler(api: Api, message: Message) -> Result<(), Error> {
                 _ => (),
             }
         }
+        MessageKind::Photo {
+            ref caption,
+            ref data,
+            ..
+        } => {
+            let title = utils::get_title(&message);
+            println!(
+                "<{}({})>[{}({})]: *PHOTO* {}",
+                &message.chat.id(),
+                title,
+                &message.from.id,
+                &message.from.first_name,
+                caption.clone().unwrap_or("NO_TITLE".to_string())
+            );
+            utils::get_files(api, message, token).await?;
+        }
+
+        MessageKind::Document { ref caption, .. } => {
+            let title = utils::get_title(&message);
+            println!(
+                "<{}({})>[{}({})]: *DOCUMENT* {}",
+                &message.chat.id(),
+                title,
+                &message.from.id,
+                &message.from.first_name,
+                caption.clone().unwrap_or("NO_TITLE".to_string())
+            );
+            /*match utils::get_files(api, message, token).await {
+                Ok(count) => println!("Got {} files successfully.", count),
+                Err(e) => println!("Couldn't get files: {:?}", e)
+            }
+
+             */
+            utils::get_files(api, message, token).await?;
+
+        }
+
+        MessageKind::Sticker { ref data, .. } => {
+            let title = utils::get_title(&message);
+            println!(
+                "<{}({})>[{}({})]: *STICKER*",
+                &message.chat.id(),
+                title,
+                &message.from.id,
+                &message.from.first_name,
+            );
+            utils::get_files(api, message, token).await?;
+        }
+
+        MessageKind::Voice { .. } => {
+            let title = utils::get_title(&message);
+            println!(
+                "<{}({})>[{}({})]: *VOICE*",
+                &message.chat.id(),
+                title,
+                &message.from.id,
+                &message.from.first_name,
+            );
+            utils::get_files(api, message, token).await?;
+        }
+
+        MessageKind::Video { .. } => {
+            let title = utils::get_title(&message);
+            println!(
+                "<{}({})>[{}({})]: *VIDEO*",
+                &message.chat.id(),
+                title,
+                &message.from.id,
+                &message.from.first_name,
+            );
+            utils::get_files(api, message, token).await?;
+        }
+
+        MessageKind::VideoNote { .. } => {
+            let title = utils::get_title(&message);
+            println!(
+                "<{}({})>[{}({})]: *VIDEO_NOTE*",
+                &message.chat.id(),
+                title,
+                &message.from.id,
+                &message.from.first_name,
+            );
+            utils::get_files(api, message, token).await?;
+        }
         _ => (),
     };
-
     Ok(())
 }
 
 #[tokio::main]
 async fn main() -> Result<(), errors::Error> {
-    let token = env::var("TELEGRAM_BOT_TOKEN").expect("TELEGRAM_BOT_TOKEN not set");
-    let api = Api::new(token);
+    env_logger::from_env(Env::default().default_filter_or("debug")).init();
+    let token = match env::var("TELEGRAM_BOT_TOKEN") {
+        Ok(token) => token,
+        Err(_) => {
+            error!("TELEGRAM_BOT_TOKEN not set");
+            process::exit(0x0001);
+        },
+    };
+    let api = Api::new(token.clone());
 
     // Fetch new updates via long poll method
     let mut stream = api.stream();
@@ -44,10 +138,10 @@ async fn main() -> Result<(), errors::Error> {
         // If the received update contains a new message...
         let update = update?;
         if let UpdateKind::Message(message) = update.kind {
-            db::add_user(api.clone(), message.clone()).await?;
-            db::add_conf(api.clone(), message.clone()).await?;
+            db::add_user(message.clone()).await?;
+            db::add_conf(message.clone()).await?;
 
-            handler(api.clone(), message).await?;
+            handler(api.clone(), message, token.clone()).await?;
         }
     }
     Ok(())

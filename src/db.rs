@@ -1,6 +1,7 @@
 use crate::errors;
 use crate::utils;
 use rusqlite::{named_params, params, Connection, Error, Result};
+use sha1::{Digest, Sha1};
 use std::time::SystemTime;
 use telegram_bot::*;
 
@@ -63,7 +64,8 @@ pub(crate) fn get_conf(id: telegram_bot::ChatId) -> Result<Conf, errors::Error> 
         Err(errors::Error::ConfNotFound)
     } else {
         Ok(confs[0].clone())
-    }}
+    }
+}
 
 pub(crate) fn get_confs() -> Result<Vec<Conf>> {
     let conn = open()?;
@@ -113,7 +115,7 @@ pub(crate) fn get_members(id: telegram_bot::ChatId) -> Result<Vec<telegram_bot::
     Ok(users)
 }
 
-pub(crate) async fn add_conf(api: Api, message: Message) -> Result<(), Error> {
+pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
     let conn = open()?;
     let title = utils::get_title(&message);
 
@@ -122,7 +124,7 @@ pub(crate) async fn add_conf(api: Api, message: Message) -> Result<(), Error> {
             let update = Conf {
                 id: message.chat.id(),
                 title,
-                date: 0
+                date: 0,
             };
             let mut stmt = conn.prepare(
                 "UPDATE conf
@@ -131,17 +133,14 @@ pub(crate) async fn add_conf(api: Api, message: Message) -> Result<(), Error> {
                 WHERE
                 id = :id",
             )?;
-            stmt.execute_named(&[
-                (":id", &update.id.to_string()),
-                (":title", &update.title),
-            ])?;
+            stmt.execute_named(&[(":id", &update.id.to_string()), (":title", &update.title)])?;
             //println!("Conf {:?} updated: {:?}", update.title, get_conf(update.id));
         }
         Err(e) => {
             let update = Conf {
                 id: message.chat.id(),
                 title,
-                date: 0
+                date: 0,
             };
             let unix_time = SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -168,8 +167,7 @@ pub(crate) async fn add_conf(api: Api, message: Message) -> Result<(), Error> {
     Ok(())
 }
 
-
-pub(crate) async fn add_user(api: Api, message: Message) -> Result<(), Error> {
+pub(crate) async fn add_user(message: Message) -> Result<(), Error> {
     let conn = open()?;
     match get_user(message.from.id) {
         Ok(user) => {
@@ -179,7 +177,7 @@ pub(crate) async fn add_user(api: Api, message: Message) -> Result<(), Error> {
                 last_name: message.from.last_name,
                 username: message.from.username,
                 is_bot: false,
-                language_code: None
+                language_code: None,
             };
             let mut stmt = conn.prepare(
                 "UPDATE user
@@ -209,7 +207,7 @@ pub(crate) async fn add_user(api: Api, message: Message) -> Result<(), Error> {
                 last_name: message.from.last_name,
                 username: message.from.username,
                 is_bot: false,
-                language_code: None
+                language_code: None,
             };
             let mut stmt = conn.prepare(
                 "INSERT OR IGNORE INTO
@@ -224,10 +222,44 @@ pub(crate) async fn add_user(api: Api, message: Message) -> Result<(), Error> {
                 (":date", &unix_time),
             ])?;
             //println!("User added: {:?}", user);
-
-        },
-        _ => {},
+        }
+        _ => {}
     }
     Ok(())
+}
 
+pub(crate) async fn add_file(
+    message: &Message,
+    path: String,
+    file_id: String,
+) -> Result<(), Error> {
+    let conn = open()?;
+    let mut stmt = conn.prepare(
+        "INSERT OR IGNORE INTO
+                file('path', 'user_id', 'conf_id', 'file_id')
+                VALUES (:path, :user_id, :conf_id, :file_id)",
+    )?;
+    stmt.execute_named(&[
+        (":path", &path),
+        (":user_id", &message.from.id.to_string()),
+        (":conf_id", &message.chat.id().to_string()),
+        (":file_id", &file_id),
+    ])?;
+    Ok(())
+}
+
+pub(crate) async fn get_file(file_id: String) -> Result<(), errors::Error> {
+    let conn = open()?;
+    let mut stmt = conn.prepare("SELECT path FROM file WHERE file_id = :file_id")?;
+    let mut rows = stmt.query_named(&[(":file_id", &file_id)])?;
+    let mut files = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        files.push("should be rewritten");
+    }
+    if files.len() > 0 {
+        Ok(())
+    } else {
+        Err(errors::Error::FileNotFound)
+    }
 }

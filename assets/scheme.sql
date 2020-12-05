@@ -17,6 +17,12 @@ CREATE TABLE `conf` (
         `date`  INTEGER NOT NULL,
         PRIMARY KEY(`id`)
 );
+CREATE TABLE `file` (
+         `path` TEXT NOT NULL UNIQUE,
+         `user_id`  TEXT NOT NULL,
+         `conf_id`  TEXT NOT NULL,
+         PRIMARY KEY(`path`)
+);
 CREATE TABLE IF NOT EXISTS "relations" (
         `id`    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         `word_id`       INTEGER NOT NULL,
