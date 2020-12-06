@@ -79,7 +79,7 @@ pub(crate) async fn get_files(
                     let file_hash = hasher.digest().to_string();
                     match db::get_file(file_hash.clone()).await {
                         Ok(_) => {
-                            println!("File exist");
+                            info!("File {} exist", file_hash);
                         }
                         Err(_) => {
                             let mut dest = File::create(path.clone())?;
@@ -88,7 +88,7 @@ pub(crate) async fn get_files(
                     };
                     db::add_file(&message, path, file_hash).await?;
                 }
-                Err(e) => println!("Couldn't get file: {}", e)
+                Err(e) => warn!("Couldn't get file: {}", e)
             }
         }
     };
