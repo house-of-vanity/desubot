@@ -18,7 +18,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
         MessageKind::Text { ref data, .. } => {
             let title = utils::get_title(&message);
 
-            println!(
+            info!(
                 "<{}({})>[{}({})]: {}",
                 &message.chat.id(),
                 title,
@@ -37,7 +37,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
             ..
         } => {
             let title = utils::get_title(&message);
-            println!(
+            info!(
                 "<{}({})>[{}({})]: *PHOTO* {}",
                 &message.chat.id(),
                 title,
@@ -50,7 +50,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
 
         MessageKind::Document { ref caption, .. } => {
             let title = utils::get_title(&message);
-            println!(
+            info!(
                 "<{}({})>[{}({})]: *DOCUMENT* {}",
                 &message.chat.id(),
                 title,
@@ -70,7 +70,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
 
         MessageKind::Sticker { ref data, .. } => {
             let title = utils::get_title(&message);
-            println!(
+            info!(
                 "<{}({})>[{}({})]: *STICKER*",
                 &message.chat.id(),
                 title,
@@ -82,7 +82,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
 
         MessageKind::Voice { .. } => {
             let title = utils::get_title(&message);
-            println!(
+            info!(
                 "<{}({})>[{}({})]: *VOICE*",
                 &message.chat.id(),
                 title,
@@ -94,7 +94,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
 
         MessageKind::Video { .. } => {
             let title = utils::get_title(&message);
-            println!(
+            info!(
                 "<{}({})>[{}({})]: *VIDEO*",
                 &message.chat.id(),
                 title,
@@ -106,7 +106,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
 
         MessageKind::VideoNote { .. } => {
             let title = utils::get_title(&message);
-            println!(
+            info!(
                 "<{}({})>[{}({})]: *VIDEO_NOTE*",
                 &message.chat.id(),
                 title,
@@ -123,6 +123,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
 #[tokio::main]
 async fn main() -> Result<(), errors::Error> {
     env_logger::from_env(Env::default().default_filter_or("debug")).init();
+    db::update_scheme();
     let token = match env::var("TELEGRAM_BOT_TOKEN") {
         Ok(token) => token,
         Err(_) => {

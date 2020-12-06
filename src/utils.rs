@@ -1,6 +1,6 @@
 use reqwest::Client;
 use sha1::Sha1;
-use std::fs::File;
+use std::fs::{File,create_dir as fs_create_dir};
 use std::io::prelude::*;
 use std::path::Path;
 use std::{env, io};
@@ -20,6 +20,17 @@ pub(crate) fn get_title(message: &Message) -> String {
     }
 }
 
+pub(crate) async fn create_dir(dir: &String) -> () {
+    info!("Going to create dir");
+    match fs_create_dir(dir) {
+        Ok(_) => info!("Dir {} created.", dir),
+        Err(_) => info!("Dir {} create error.", dir),
+    }
+    info!("Going to create dir");
+
+}
+
+
 pub(crate) async fn get_files(
     api: Api,
     message: Message,
@@ -35,6 +46,7 @@ pub(crate) async fn get_files(
         MessageKind::Sticker { .. } => "sticker".to_string(),
         _ => "docs".to_string(),
     };
+    create_dir(&file_type).await;
     if let Some(files) = message.get_files() {
         let group_title = get_title(&message);
         let author = message.from.id;
