@@ -1,4 +1,4 @@
-use std::{env,process};
+use std::{env, process};
 
 use futures::StreamExt;
 use reqwest;
@@ -17,7 +17,6 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
     match message.kind {
         MessageKind::Text { ref data, .. } => {
             let title = utils::get_title(&message);
-
             info!(
                 "<{}({})>[{}({})]: {}",
                 &message.chat.id(),
@@ -26,6 +25,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
                 &message.from.first_name,
                 data
             );
+            db::add_sentence(&message).await?;
             match data.as_str() {
                 "/here" => commands::here(api, message).await?,
                 _ => (),
@@ -58,14 +58,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
                 &message.from.first_name,
                 caption.clone().unwrap_or("NO_TITLE".to_string())
             );
-            /*match utils::get_files(api, message, token).await {
-                Ok(count) => println!("Got {} files successfully.", count),
-                Err(e) => println!("Couldn't get files: {:?}", e)
-            }
-
-             */
             utils::get_files(api, message, token).await?;
-
         }
 
         MessageKind::Sticker { ref data, .. } => {
@@ -129,7 +122,7 @@ async fn main() -> Result<(), errors::Error> {
         Err(_) => {
             error!("TELEGRAM_BOT_TOKEN not set");
             process::exit(0x0001);
-        },
+        }
     };
     let api = Api::new(token.clone());
 

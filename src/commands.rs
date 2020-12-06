@@ -7,7 +7,7 @@ use tokio::time::delay_for;
 pub(crate) async fn here(api: Api, message: Message) -> Result<(), Error> {
     let members: Vec<telegram_bot::User> = db::get_members(message.chat.id()).unwrap();
     for u in &members {
-        println!("Found user {:?}", u);
+        debug!("Found user {:?}", u);
     }
     let mut msg = "<b>I summon you</b>, ".to_string();
     for user in members {
@@ -21,10 +21,11 @@ pub(crate) async fn here(api: Api, message: Message) -> Result<(), Error> {
         };
         msg = format!("{} {}", msg, mention);
     }
-    println!("Message: {:?}", msg);
 
-    api.send(message.text_reply(msg).parse_mode(ParseMode::Html))
-        .await?;
+    match api.send(message.text_reply(msg).parse_mode(ParseMode::Html)).await {
+        Ok(_) => debug!("@here command sent to {}", message.from.id),
+        Err(_) => warn!("@here command sent failed to {}", message.from.id),
+    }
     //api.send(message.chat.text("Text to message chat")).await?;
     //api.send(message.from.text("Private text")).await?;
     Ok(())

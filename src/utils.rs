@@ -1,6 +1,6 @@
 use reqwest::Client;
 use sha1::Sha1;
-use std::fs::{File,create_dir as fs_create_dir};
+use std::fs::{create_dir as fs_create_dir, File};
 use std::io::prelude::*;
 use std::path::Path;
 use std::{env, io};
@@ -10,6 +10,16 @@ use uuid::Uuid;
 use crate::db;
 use crate::errors;
 extern crate reqwest;
+use ascii::AsciiChar::{LineFeed, EOT};
+use subprocess::{Exec, Popen, PopenConfig, Redirection};
+use serde_json::Value;
+//use serde::{Deserialize, Serialize};
+
+//#[derive(Serialize, Deserialize)]
+struct StemWord {
+
+}
+
 
 pub(crate) fn get_title(message: &Message) -> String {
     match &message.chat {
@@ -21,15 +31,11 @@ pub(crate) fn get_title(message: &Message) -> String {
 }
 
 pub(crate) async fn create_dir(dir: &String) -> () {
-    info!("Going to create dir");
     match fs_create_dir(dir) {
         Ok(_) => info!("Dir {} created.", dir),
-        Err(_) => info!("Dir {} create error.", dir),
+        Err(_) => (),
     }
-    info!("Going to create dir");
-
 }
-
 
 pub(crate) async fn get_files(
     api: Api,
@@ -79,7 +85,7 @@ pub(crate) async fn get_files(
                     let file_hash = hasher.digest().to_string();
                     match db::get_file(file_hash.clone()).await {
                         Ok(_) => {
-                            info!("File {} exist", file_hash);
+                            debug!("File {} exist", file_hash);
                         }
                         Err(_) => {
                             let mut dest = File::create(path.clone())?;
@@ -88,9 +94,34 @@ pub(crate) async fn get_files(
                     };
                     db::add_file(&message, path, file_hash).await?;
                 }
-                Err(e) => warn!("Couldn't get file: {}", e)
+                Err(e) => warn!("Couldn't get file: {}", e),
             }
         }
     };
     Ok(file_count)
+}
+
+pub(crate) async fn stemming(message: &Message) -> Result<Vec<String>, errors::Error> {
+    let mut words: Vec<String> = vec![];
+    let proc = Exec::shell("mystem -d --format json -l");
+    match proc
+        .stdin(message.text().unwrap().as_str())
+        .communicate()
+        .unwrap()
+        .read_string()
+        .unwrap()
+        .0
+    {
+        Some(line) => {
+            let mut v: Vec<Value> = serde_json::from_str(line.as_str())?;
+            for i in v {
+                words.push(i["analysis"][0]["lex"].to_string().replace("\"", ""));
+            }
+            words.retain(|x| x != "null");
+            info!("{:?}", words);
+        }
+        None => return Ok(vec![]),
+    };
+
+    Ok(words)
 }
