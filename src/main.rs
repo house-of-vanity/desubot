@@ -27,6 +27,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
             match data.as_str() {
                 "/here" => commands::here(api, message).await?,
                 "/top" => commands::top(api, message).await?,
+                "/stat" => commands::top(api, message).await?,
                 _ => (),
             }
         }
