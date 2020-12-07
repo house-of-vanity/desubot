@@ -9,7 +9,7 @@ use crate::db;
 use crate::errors;
 extern crate reqwest;
 use serde_json::Value;
-use subprocess::{Exec, };
+use subprocess::Exec;
 
 pub(crate) fn get_title(message: &Message) -> String {
     match &message.chat {
@@ -81,13 +81,12 @@ pub(crate) async fn get_files(
                     hasher.update(&content);
                     let file_hash = hasher.digest().to_string();
                     match db::get_file(file_hash.clone()).await {
-                        Ok(_) => {
-                        }
+                        Ok(_) => {}
                         Err(_) => {
                             let mut dest = File::create(path.clone())?;
                             match dest.write(&content) {
-                                Ok(_) => {},
-                                Err(e) => panic!("IO Error: Couldn't save file: {:?}", e)
+                                Ok(_) => {}
+                                Err(e) => panic!("IO Error: Couldn't save file: {:?}", e),
                             }
                         }
                     };

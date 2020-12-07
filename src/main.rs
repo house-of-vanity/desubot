@@ -26,13 +26,11 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
             db::add_sentence(&message).await?;
             match data.as_str() {
                 "/here" => commands::here(api, message).await?,
+                "/top" => commands::top(api, message).await?,
                 _ => (),
             }
         }
-        MessageKind::Photo {
-            ref caption,
-            ..
-        } => {
+        MessageKind::Photo { ref caption, .. } => {
             let title = utils::get_title(&message);
             info!(
                 "<{}({})>[{}({})]: *PHOTO* {}",
@@ -114,8 +112,8 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
 async fn main() -> Result<(), errors::Error> {
     env_logger::from_env(Env::default().default_filter_or("info")).init();
     match db::update_scheme() {
-        Ok(_) => {},
-        Err(e) => panic!("Database error: {:?}", e)
+        Ok(_) => {}
+        Err(e) => panic!("Database error: {:?}", e),
     }
     let token = match env::var("TELEGRAM_BOT_TOKEN") {
         Ok(token) => token,

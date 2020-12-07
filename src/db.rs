@@ -1,6 +1,6 @@
 use crate::errors;
 use crate::utils;
-use rusqlite::{params, Connection, Error, Result};
+use rusqlite::{params, named_params, Connection, Error, Result};
 use std::time::SystemTime;
 use telegram_bot::*;
 
@@ -9,6 +9,11 @@ pub struct Conf {
     id: telegram_bot::ChatId,
     title: String,
     date: i32,
+}
+#[derive(Debug, Clone)]
+pub struct TopWord {
+    pub word: String,
+    pub count: i32,
 }
 
 pub(crate) fn open() -> Result<Connection> {
@@ -250,11 +255,10 @@ pub(crate) async fn add_file(
 pub(crate) async fn get_file(file_id: String) -> Result<i64, errors::Error> {
     let conn = open()?;
     let file_rowid = match { conn.prepare("SELECT rowid FROM file WHERE file_id = :file_id")? }
-        .query_row(params![file_id], |row| row.get(0)) {
+        .query_row(params![file_id], |row| row.get(0))
+    {
         Ok(id) => Ok(id),
-        Err(_) => {
-            Err(errors::Error::FileNotFound)
-        }
+        Err(_) => Err(errors::Error::FileNotFound),
     };
 
     file_rowid
@@ -330,8 +334,8 @@ pub(crate) async fn add_sentence(message: &telegram_bot::Message) -> Result<(), 
             Ok(id) => {
                 debug!("Added {}: rowid: {}", &word, id);
                 match add_relation(id, msg_rowid, message).await {
-                    Ok(_) => {},
-                    Err(e) => panic!("SQLITE3 Error: Relations failed: {:?}", e)
+                    Ok(_) => {}
+                    Err(e) => panic!("SQLITE3 Error: Relations failed: {:?}", e),
                 }
             }
             Err(_) => debug!("Word {} is in stop list.", &word),
@@ -339,6 +343,39 @@ pub(crate) async fn add_sentence(message: &telegram_bot::Message) -> Result<(), 
     }
 
     Ok(())
+}
+
+pub(crate) async fn get_top(
+    message: &telegram_bot::Message,
+) -> Result<Vec<TopWord>, errors::Error> {
+    let user_id = i64::from(message.from.id);
+    let conf_id = i64::from(message.chat.id());
+
+    let conn = open()?;
+    let mut stmt = conn.prepare("
+        SELECT w.word, COUNT(*) as count FROM relations r
+        LEFT JOIN word w ON w.id = r.word_id
+        LEFT JOIN `user` u ON u.id = r.user_id
+        WHERE u.id = :user_id AND
+        r.conf_id = :conf_id AND
+        r.id > (
+            SELECT IFNULL(MAX(relation_id), 0) FROM reset WHERE user_id = :user_id AND conf_id = :conf_id
+        )
+        GROUP BY w.word
+        ORDER BY count DESC
+        LIMIT 10
+    ")?;
+
+    let mut rows = stmt.query_named(named_params! {":user_id": user_id, ":conf_id": conf_id})?;
+    let mut top = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        top.push(TopWord {
+            word: row.get(0)?,
+            count: row.get(1)?,
+        })
+    }
+    Ok(top)
 }
 
 // SCHEME
