@@ -1,7 +1,6 @@
 use crate::errors;
 use crate::utils;
-use rusqlite::{named_params, params, Connection, Error, Result};
-use sha1::{Digest, Sha1};
+use rusqlite::{params, Connection, Error, Result};
 use std::time::SystemTime;
 use telegram_bot::*;
 
@@ -20,7 +19,7 @@ pub(crate) fn open() -> Result<Connection> {
 
 pub(crate) fn update_scheme() -> Result<()> {
     let conn = open()?;
-    conn.execute(scheme, params![])?;
+    conn.execute(SCHEME, params![])?;
     info!("Scheme updated.");
     Ok(())
 }
@@ -57,7 +56,6 @@ pub(crate) fn get_conf(id: telegram_bot::ChatId) -> Result<Conf, errors::Error> 
 
     let mut rows = stmt.query_named(&[(":id", &id.to_string())])?;
     let mut confs = Vec::new();
-
     while let Some(row) = rows.next()? {
         confs.push(Conf {
             id: telegram_bot::ChatId::new(row.get(0)?),
@@ -65,8 +63,6 @@ pub(crate) fn get_conf(id: telegram_bot::ChatId) -> Result<Conf, errors::Error> 
             date: row.get(2)?,
         })
     }
-    //println!("Confs: {:?}", confs);
-
     if confs.len() == 0 {
         Err(errors::Error::ConfNotFound)
     } else {
@@ -74,6 +70,7 @@ pub(crate) fn get_conf(id: telegram_bot::ChatId) -> Result<Conf, errors::Error> 
     }
 }
 
+/*
 pub(crate) fn get_confs() -> Result<Vec<Conf>> {
     let conn = open()?;
     let mut stmt = conn.prepare("SELECT id, title, date FROM conf")?;
@@ -92,6 +89,7 @@ pub(crate) fn get_confs() -> Result<Vec<Conf>> {
 
     Ok(confs)
 }
+ */
 
 pub(crate) fn get_members(id: telegram_bot::ChatId) -> Result<Vec<telegram_bot::User>> {
     let conn = open()?;
@@ -118,7 +116,6 @@ pub(crate) fn get_members(id: telegram_bot::ChatId) -> Result<Vec<telegram_bot::
             language_code: None,
         })
     }
-
     Ok(users)
 }
 
@@ -127,7 +124,7 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
     let title = utils::get_title(&message);
 
     match get_conf(message.chat.id()) {
-        Ok(conf) => {
+        Ok(_) => {
             let update = Conf {
                 id: message.chat.id(),
                 title,
@@ -143,16 +140,13 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
             stmt.execute_named(&[(":id", &update.id.to_string()), (":title", &update.title)])?;
             //println!("Conf {:?} updated: {:?}", update.title, get_conf(update.id));
         }
-        Err(e) => {
+        Err(_) => {
             let update = Conf {
                 id: message.chat.id(),
                 title,
                 date: 0,
             };
-            let unix_time = SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_secs() as i64;
+            let unix_time = utils::unixtime().await;
 
             let mut stmt = conn.prepare(
                 "UPDATE conf
@@ -169,7 +163,6 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
             ])?;
             //println!("Conf {:?} added: {:?}", update.title, get_conf(update.id));
         }
-        _ => {}
     }
     Ok(())
 }
@@ -177,7 +170,7 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
 pub(crate) async fn add_user(message: Message) -> Result<(), Error> {
     let conn = open()?;
     match get_user(message.from.id) {
-        Ok(user) => {
+        Ok(_) => {
             let update = telegram_bot::User {
                 id: message.from.id,
                 first_name: message.from.first_name,
@@ -203,7 +196,7 @@ pub(crate) async fn add_user(message: Message) -> Result<(), Error> {
             ])?;
             //println!("User {} updated: {:?}", update.first_name, get_user(user.id));
         }
-        Err(e) => {
+        Err(_) => {
             let unix_time = SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .unwrap()
@@ -230,7 +223,6 @@ pub(crate) async fn add_user(message: Message) -> Result<(), Error> {
             ])?;
             //println!("User added: {:?}", user);
         }
-        _ => {}
     }
     Ok(())
 }
@@ -255,44 +247,102 @@ pub(crate) async fn add_file(
     Ok(())
 }
 
-pub(crate) async fn get_file(file_id: String) -> Result<(), errors::Error> {
+pub(crate) async fn get_file(file_id: String) -> Result<i64, errors::Error> {
     let conn = open()?;
-    let mut stmt = conn.prepare("SELECT path FROM file WHERE file_id = :file_id")?;
-    let mut rows = stmt.query_named(&[(":file_id", &file_id)])?;
-    let mut files = Vec::new();
+    let file_rowid = match { conn.prepare("SELECT rowid FROM file WHERE file_id = :file_id")? }
+        .query_row(params![file_id], |row| row.get(0)) {
+        Ok(id) => Ok(id),
+        Err(_) => {
+            Err(errors::Error::FileNotFound)
+        }
+    };
 
-    while let Some(row) = rows.next()? {
-        files.push("should be rewritten");
+    file_rowid
+}
+
+async fn add_word(word: &String) -> Result<i64, errors::Error> {
+    match get_stop_word(&word).await {
+        Err(_) => return Err(errors::Error::WordInStopList),
+        _ => {}
     }
-    if files.len() > 0 {
-        Ok(())
-    } else {
-        Err(errors::Error::FileNotFound)
+    let conn = open()?;
+    let word_rowid = match { conn.prepare("INSERT OR IGNORE INTO word('word') VALUES (:word)")? }
+        .insert(params![word])
+    {
+        Ok(id) => id,
+        Err(_) => { conn.prepare("SELECT rowid FROM word WHERE word = (:word)")? }
+            .query_row(params![word], |row| row.get(0))?,
+    };
+    Ok(word_rowid)
+}
+
+async fn get_stop_word(stop_word: &String) -> Result<(), errors::Error> {
+    let conn = open()?;
+    match conn.execute_named(
+        "SELECT rowid FROM stop_words WHERE word = (:stop_word)",
+        &[(":stop_word", &stop_word)],
+    ) {
+        Ok(i) => match i {
+            0 => Ok(()),
+            _ => Err(errors::Error::WordNotFound),
+        },
+        Err(e) => Err(errors::Error::SQLITE3Error(e)),
     }
 }
 
-
-async fn add_word(word: String) -> Result<(), errors::Error> {
+async fn add_relation(word_id: i64, msg_id: i64, message: &Message) -> Result<i64, errors::Error> {
+    let user_id = i64::from(message.from.id);
+    let conf_id = i64::from(message.chat.id());
+    let unix_time = utils::unixtime().await;
     let conn = open()?;
-    conn.execute_named("INSERT OR IGNORE INTO word('word') VALUES (:word)", &[(":word", &word)]);
-    debug!("Added word {}", word);
-    Ok(())
+    let rowid = match {
+        conn.prepare(
+            "INSERT OR IGNORE INTO
+        relations('word_id', 'user_id', 'conf_id', 'msg_id', 'date')
+        VALUES (:word_id, :user_id, :conf_id, :msg_id, :date)",
+        )?
+    }
+    .insert(params![word_id, user_id, conf_id, msg_id, unix_time])
+    {
+        Ok(id) => id,
+        Err(e) => return Err(errors::Error::SQLITE3Error(e)),
+    };
+    Ok(rowid)
 }
-
-
 
 pub(crate) async fn add_sentence(message: &telegram_bot::Message) -> Result<(), errors::Error> {
+    let text = message.text().unwrap();
+    let conn = open()?;
+
+    // Save sentence
+    let msg_rowid = match { conn.prepare("INSERT OR IGNORE INTO messages('text') VALUES (:text)")? }
+        .insert(params![text])
+    {
+        Ok(id) => id,
+        Err(_) => { conn.prepare("SELECT rowid FROM messages WHERE text = (:text)")? }
+            .query_row(params![text], |row| row.get(0))?,
+    };
+
+    // Save stemmed words
     let words = utils::stemming(message).await?;
-    //let conn = open()?;
     for word in words {
-        add_word(word).await?;
+        match add_word(&word).await {
+            Ok(id) => {
+                debug!("Added {}: rowid: {}", &word, id);
+                match add_relation(id, msg_rowid, message).await {
+                    Ok(_) => {},
+                    Err(e) => panic!("SQLITE3 Error: Relations failed: {:?}", e)
+                }
+            }
+            Err(_) => debug!("Word {} is in stop list.", &word),
+        }
     }
 
     Ok(())
 }
 
 // SCHEME
-static scheme: &str = "
+static SCHEME: &str = "
 PRAGMA foreign_keys = off;
 BEGIN TRANSACTION;
 

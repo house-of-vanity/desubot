@@ -1,31 +1,21 @@
-use reqwest::Client;
 use sha1::Sha1;
 use std::fs::{create_dir as fs_create_dir, File};
 use std::io::prelude::*;
-use std::path::Path;
-use std::{env, io};
+use std::time::SystemTime;
 use telegram_bot::*;
 use uuid::Uuid;
 
 use crate::db;
 use crate::errors;
 extern crate reqwest;
-use ascii::AsciiChar::{LineFeed, EOT};
-use subprocess::{Exec, Popen, PopenConfig, Redirection};
 use serde_json::Value;
-//use serde::{Deserialize, Serialize};
-
-//#[derive(Serialize, Deserialize)]
-struct StemWord {
-
-}
-
+use subprocess::{Exec, };
 
 pub(crate) fn get_title(message: &Message) -> String {
     match &message.chat {
         MessageChat::Supergroup(chat) => chat.title.clone(),
         MessageChat::Group(chat) => chat.title.clone(),
-        MessageChat::Private(chat) => "PRIVATE".to_string(),
+        MessageChat::Private(_) => format!("PRIVATE"),
         _ => "PRIVATE".to_string(),
     }
 }
@@ -35,6 +25,13 @@ pub(crate) async fn create_dir(dir: &String) -> () {
         Ok(_) => info!("Dir {} created.", dir),
         Err(_) => (),
     }
+}
+
+pub(crate) async fn unixtime() -> i64 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
 }
 
 pub(crate) async fn get_files(
@@ -66,7 +63,7 @@ pub(crate) async fn get_files(
                         token,
                         api_response.file_path.unwrap()
                     );
-                    let mut file_response = reqwest::get(&url).await?;
+                    let file_response = reqwest::get(&url).await?;
                     let ext = {
                         file_response
                             .url()
@@ -85,16 +82,18 @@ pub(crate) async fn get_files(
                     let file_hash = hasher.digest().to_string();
                     match db::get_file(file_hash.clone()).await {
                         Ok(_) => {
-                            debug!("File {} exist", file_hash);
                         }
                         Err(_) => {
                             let mut dest = File::create(path.clone())?;
-                            dest.write(&content);
+                            match dest.write(&content) {
+                                Ok(_) => {},
+                                Err(e) => panic!("IO Error: Couldn't save file: {:?}", e)
+                            }
                         }
                     };
                     db::add_file(&message, path, file_hash).await?;
                 }
-                Err(e) => warn!("Couldn't get file: {}", e),
+                Err(e) => error!("Couldn't get file: {}", e),
             }
         }
     };
@@ -113,12 +112,15 @@ pub(crate) async fn stemming(message: &Message) -> Result<Vec<String>, errors::E
         .0
     {
         Some(line) => {
-            let mut v: Vec<Value> = serde_json::from_str(line.as_str())?;
+            let v: Vec<Value> = match serde_json::from_str(line.as_str()) {
+                Ok(val) => val,
+                Err(_) => return Ok(vec![]),
+            };
             for i in v {
                 words.push(i["analysis"][0]["lex"].to_string().replace("\"", ""));
             }
             words.retain(|x| x != "null");
-            info!("{:?}", words);
+            //debug!("Parsed words: {}.", words.join(", "));
         }
         None => return Ok(vec![]),
     };

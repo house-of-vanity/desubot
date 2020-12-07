@@ -1,8 +1,7 @@
 use crate::db;
 use html_escape::encode_text;
 use telegram_bot::prelude::*;
-use telegram_bot::{Api, Error, Message, MessageKind, ParseMode, UpdateKind};
-use tokio::time::delay_for;
+use telegram_bot::{Api, Error, Message, ParseMode, };
 
 pub(crate) async fn here(api: Api, message: Message) -> Result<(), Error> {
     let members: Vec<telegram_bot::User> = db::get_members(message.chat.id()).unwrap();
@@ -22,7 +21,10 @@ pub(crate) async fn here(api: Api, message: Message) -> Result<(), Error> {
         msg = format!("{} {}", msg, mention);
     }
 
-    match api.send(message.text_reply(msg).parse_mode(ParseMode::Html)).await {
+    match api
+        .send(message.text_reply(msg).parse_mode(ParseMode::Html))
+        .await
+    {
         Ok(_) => debug!("@here command sent to {}", message.from.id),
         Err(_) => warn!("@here command sent failed to {}", message.from.id),
     }

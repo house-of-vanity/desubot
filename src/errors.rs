@@ -1,9 +1,8 @@
 use reqwest::Error as reqwest_error;
 use rusqlite::Error as sqlite_error;
-use rusqlite::{named_params, params, Connection, Result};
-use std::{fmt, io, io::Error as io_error};
-use telegram_bot::Error as tg_error;
 use serde_json::Error as serde_error;
+use std::{fmt, io::Error as io_error};
+use telegram_bot::Error as tg_error;
 
 #[derive(Debug)]
 pub(crate) enum Error {
@@ -12,6 +11,8 @@ pub(crate) enum Error {
     TelegramError(tg_error),
     ReqwestError(reqwest_error),
     ConfNotFound,
+    WordNotFound,
+    WordInStopList,
     IOError(io_error),
     FileNotFound,
     JsonParseError(serde_error),

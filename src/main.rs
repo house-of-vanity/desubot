@@ -1,8 +1,6 @@
 use std::{env, process};
 
 use futures::StreamExt;
-use reqwest;
-use telegram_bot::types::chat::MessageChat;
 use telegram_bot::*;
 #[macro_use]
 extern crate log;
@@ -33,7 +31,6 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
         }
         MessageKind::Photo {
             ref caption,
-            ref data,
             ..
         } => {
             let title = utils::get_title(&message);
@@ -61,7 +58,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
             utils::get_files(api, message, token).await?;
         }
 
-        MessageKind::Sticker { ref data, .. } => {
+        MessageKind::Sticker { .. } => {
             let title = utils::get_title(&message);
             info!(
                 "<{}({})>[{}({})]: *STICKER*",
@@ -115,8 +112,11 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
 
 #[tokio::main]
 async fn main() -> Result<(), errors::Error> {
-    env_logger::from_env(Env::default().default_filter_or("debug")).init();
-    db::update_scheme();
+    env_logger::from_env(Env::default().default_filter_or("info")).init();
+    match db::update_scheme() {
+        Ok(_) => {},
+        Err(e) => panic!("Database error: {:?}", e)
+    }
     let token = match env::var("TELEGRAM_BOT_TOKEN") {
         Ok(token) => token,
         Err(_) => {
@@ -125,7 +125,6 @@ async fn main() -> Result<(), errors::Error> {
         }
     };
     let api = Api::new(token.clone());
-
     // Fetch new updates via long poll method
     let mut stream = api.stream();
     while let Some(update) = stream.next().await {
@@ -134,7 +133,6 @@ async fn main() -> Result<(), errors::Error> {
         if let UpdateKind::Message(message) = update.kind {
             db::add_user(message.clone()).await?;
             db::add_conf(message.clone()).await?;
-
             handler(api.clone(), message, token.clone()).await?;
         }
     }
