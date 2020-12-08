@@ -1,8 +1,10 @@
 use crate::db;
+use crate::errors::Error;
 use html_escape::encode_text;
+use markov::Chain;
 use telegram_bot::prelude::*;
 use telegram_bot::{Api, Message, ParseMode};
-use crate::errors::Error;
+use rand::Rng;
 
 pub(crate) async fn here(api: Api, message: Message) -> Result<(), Error> {
     let members: Vec<telegram_bot::User> = db::get_members(message.chat.id()).unwrap();
@@ -39,7 +41,10 @@ pub(crate) async fn top(api: Api, message: Message) -> Result<(), Error> {
     let mut msg = "<b>Your top using words:</b>\n<pre>".to_string();
     let mut counter = 1;
     for word in top.iter() {
-        msg = format!("{} <b>{}</b> {} - {}\n", msg, counter, word.word, word.count);
+        msg = format!(
+            "{} <b>{}</b> {} - {}\n",
+            msg, counter, word.word, word.count
+        );
         counter += 1;
     }
     msg = format!("{}{}", msg, "</pre>");
@@ -52,4 +57,26 @@ pub(crate) async fn top(api: Api, message: Message) -> Result<(), Error> {
     }
     //api.send(message.chat.text("Text to message chat")).await?;
     //api.send(message.from.text("Private text")).await?;
-    Ok(())}
+    Ok(())
+}
+
+pub(crate) async fn markov_all(api: Api, message: Message) -> Result<(), Error> {
+    let messages = db::get_random_messages().await?;
+    let mut chain = Chain::new();
+    chain.feed(messages);
+    let mut sentences = chain.generate();
+    let mut msg = String::new();
+    for _ in 1..rand::thread_rng().gen_range(2, 10) {
+        msg = format!("{} {}", msg, sentences.pop().unwrap());
+    }
+    match api
+        .send(message.text_reply(msg.trim()).parse_mode(ParseMode::Html))
+        .await
+    {
+        Ok(_) => debug!("/top command sent to {}", message.chat.id()),
+        Err(_) => warn!("/top command sent failed to {}", message.chat.id()),
+    }
+    //api.send(message.chat.text("Text to message chat")).await?;
+    //api.send(message.from.text("Private text")).await?;
+    Ok(())
+}

@@ -1,6 +1,6 @@
 use crate::errors;
 use crate::utils;
-use rusqlite::{params, named_params, Connection, Error, Result};
+use rusqlite::{named_params, params, Connection, Error, Result};
 use std::time::SystemTime;
 use telegram_bot::*;
 
@@ -95,6 +95,17 @@ pub(crate) fn get_confs() -> Result<Vec<Conf>> {
     Ok(confs)
 }
  */
+pub(crate) async fn get_random_messages() -> Result<Vec<String>, Error> {
+    let conn = open()?;
+    let mut stmt = conn.prepare("SELECT text FROM messages ORDER BY RANDOM() LIMIT 50")?;
+    let mut rows = stmt.query_named(named_params![])?;
+    let mut messages = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        messages.push(row.get(0)?)
+    }
+    Ok(messages)
+}
 
 pub(crate) fn get_members(id: telegram_bot::ChatId) -> Result<Vec<telegram_bot::User>> {
     let conn = open()?;
