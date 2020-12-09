@@ -24,7 +24,14 @@ pub(crate) fn open() -> Result<Connection> {
 
 pub(crate) fn update_scheme() -> Result<()> {
     let conn = open()?;
-    conn.execute(SCHEME, params![])?;
+    //let x = conn.execute(SCHEME, params![])?;
+    for table in SCHEME.split(';').into_iter() {
+        let t = table.trim();
+        if t != "" {        info!("{:?}", t);
+
+            conn.execute(t, params![])?;
+        }
+    }
     info!("Scheme updated.");
     Ok(())
 }
@@ -32,7 +39,7 @@ pub(crate) fn update_scheme() -> Result<()> {
 pub(crate) fn get_user(id: telegram_bot::UserId) -> Result<telegram_bot::User, errors::Error> {
     let conn = open()?;
     let mut stmt =
-        conn.prepare("SELECT id, username, first_name, last_name, date FROM user WHERE id = :id")?;
+        conn.prepare_cached("SELECT id, username, first_name, last_name, date FROM user WHERE id = :id")?;
 
     let mut rows = stmt.query_named(&[(":id", &id.to_string())])?;
     let mut users = Vec::new();
@@ -57,7 +64,7 @@ pub(crate) fn get_user(id: telegram_bot::UserId) -> Result<telegram_bot::User, e
 
 pub(crate) fn get_conf(id: telegram_bot::ChatId) -> Result<Conf, errors::Error> {
     let conn = open()?;
-    let mut stmt = conn.prepare("SELECT id, title, date FROM conf WHERE id = :id")?;
+    let mut stmt = conn.prepare_cached("SELECT id, title, date FROM conf WHERE id = :id")?;
 
     let mut rows = stmt.query_named(&[(":id", &id.to_string())])?;
     let mut confs = Vec::new();
@@ -97,7 +104,7 @@ pub(crate) fn get_confs() -> Result<Vec<Conf>> {
  */
 pub(crate) async fn get_random_messages() -> Result<Vec<String>, Error> {
     let conn = open()?;
-    let mut stmt = conn.prepare("SELECT text FROM messages ORDER BY RANDOM() LIMIT 50")?;
+    let mut stmt = conn.prepare_cached("SELECT text FROM messages ORDER BY RANDOM() LIMIT 50")?;
     let mut rows = stmt.query_named(named_params![])?;
     let mut messages = Vec::new();
 
@@ -109,7 +116,7 @@ pub(crate) async fn get_random_messages() -> Result<Vec<String>, Error> {
 
 pub(crate) fn get_members(id: telegram_bot::ChatId) -> Result<Vec<telegram_bot::User>> {
     let conn = open()?;
-    let mut stmt = conn.prepare(
+    let mut stmt = conn.prepare_cached(
         "
         SELECT DISTINCT(u.username), u.id, u.first_name, u.last_name, u.date
         FROM relations r
@@ -146,7 +153,7 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
                 title,
                 date: 0,
             };
-            let mut stmt = conn.prepare(
+            let mut stmt = conn.prepare_cached(
                 "UPDATE conf
                 SET
                     title = :title
@@ -164,7 +171,7 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
             };
             let unix_time = utils::unixtime().await;
 
-            let mut stmt = conn.prepare(
+            let mut stmt = conn.prepare_cached(
                 "UPDATE conf
                 SET
                     title = :title,
@@ -195,7 +202,7 @@ pub(crate) async fn add_user(message: Message) -> Result<(), Error> {
                 is_bot: false,
                 language_code: None,
             };
-            let mut stmt = conn.prepare(
+            let mut stmt = conn.prepare_cached(
                 "UPDATE user
                 SET
                     username = :username,
@@ -225,7 +232,7 @@ pub(crate) async fn add_user(message: Message) -> Result<(), Error> {
                 is_bot: false,
                 language_code: None,
             };
-            let mut stmt = conn.prepare(
+            let mut stmt = conn.prepare_cached(
                 "INSERT OR IGNORE INTO
                 user('id', 'username', 'first_name', 'last_name', 'date')
                 VALUES (:id, :username, :first_name, :last_name, :date)",
@@ -249,7 +256,7 @@ pub(crate) async fn add_file(
     file_id: String,
 ) -> Result<(), Error> {
     let conn = open()?;
-    let mut stmt = conn.prepare(
+    let mut stmt = conn.prepare_cached(
         "INSERT OR IGNORE INTO
                 file('path', 'user_id', 'conf_id', 'file_id')
                 VALUES (:path, :user_id, :conf_id, :file_id)",
@@ -265,7 +272,7 @@ pub(crate) async fn add_file(
 
 pub(crate) async fn get_file(file_id: String) -> Result<i64, errors::Error> {
     let conn = open()?;
-    let file_rowid = match { conn.prepare("SELECT rowid FROM file WHERE file_id = :file_id")? }
+    let file_rowid = match { conn.prepare_cached("SELECT rowid FROM file WHERE file_id = :file_id")? }
         .query_row(params![file_id], |row| row.get(0))
     {
         Ok(id) => Ok(id),
@@ -281,11 +288,11 @@ async fn add_word(word: &String) -> Result<i64, errors::Error> {
         _ => {}
     }
     let conn = open()?;
-    let word_rowid = match { conn.prepare("INSERT OR IGNORE INTO word('word') VALUES (:word)")? }
+    let word_rowid = match { conn.prepare_cached("INSERT OR IGNORE INTO word('word') VALUES (:word)")? }
         .insert(params![word])
     {
         Ok(id) => id,
-        Err(_) => { conn.prepare("SELECT rowid FROM word WHERE word = (:word)")? }
+        Err(_) => { conn.prepare_cached("SELECT rowid FROM word WHERE word = (:word)")? }
             .query_row(params![word], |row| row.get(0))?,
     };
     Ok(word_rowid)
@@ -311,7 +318,7 @@ async fn add_relation(word_id: i64, msg_id: i64, message: &Message) -> Result<i6
     let unix_time = utils::unixtime().await;
     let conn = open()?;
     let rowid = match {
-        conn.prepare(
+        conn.prepare_cached(
             "INSERT OR IGNORE INTO
         relations('word_id', 'user_id', 'conf_id', 'msg_id', 'date')
         VALUES (:word_id, :user_id, :conf_id, :msg_id, :date)",
@@ -330,11 +337,11 @@ pub(crate) async fn add_sentence(message: &telegram_bot::Message) -> Result<(), 
     let conn = open()?;
 
     // Save sentence
-    let msg_rowid = match { conn.prepare("INSERT OR IGNORE INTO messages('text') VALUES (:text)")? }
+    let msg_rowid = match { conn.prepare_cached("INSERT OR IGNORE INTO messages('text') VALUES (:text)")? }
         .insert(params![text])
     {
         Ok(id) => id,
-        Err(_) => { conn.prepare("SELECT rowid FROM messages WHERE text = (:text)")? }
+        Err(_) => { conn.prepare_cached("SELECT rowid FROM messages WHERE text = (:text)")? }
             .query_row(params![text], |row| row.get(0))?,
     };
 
@@ -363,7 +370,7 @@ pub(crate) async fn get_top(
     let conf_id = i64::from(message.chat.id());
 
     let conn = open()?;
-    let mut stmt = conn.prepare("
+    let mut stmt = conn.prepare_cached("
         SELECT w.word, COUNT(*) as count FROM relations r
         LEFT JOIN word w ON w.id = r.word_id
         LEFT JOIN `user` u ON u.id = r.user_id
@@ -391,15 +398,6 @@ pub(crate) async fn get_top(
 
 // SCHEME
 static SCHEME: &str = "
---
--- File generated with SQLiteStudio v3.2.1 on Mon Dec 7 15:57:23 2020
---
--- Text encoding used: System
---
-PRAGMA foreign_keys = off;
-BEGIN TRANSACTION;
-
--- Table: alert
 CREATE TABLE IF NOT EXISTS alert (
     conf_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
@@ -407,9 +405,6 @@ CREATE TABLE IF NOT EXISTS alert (
     time    TEXT NOT NULL,
     message TEXT
 );
-
-
--- Table: conf
 CREATE TABLE IF NOT EXISTS conf (
     id    NUMERIC NOT NULL
                   UNIQUE,
@@ -419,26 +414,17 @@ CREATE TABLE IF NOT EXISTS conf (
         id
     )
 );
-
-
--- Table: file
 CREATE TABLE IF NOT EXISTS file (
     path    TEXT   NOT NULL,
     user_id TEXT   NOT NULL,
     conf_id TEXT   NOT NULL,
     file_id STRING PRIMARY KEY
 );
-
-
--- Table: messages
 CREATE TABLE IF NOT EXISTS messages (
     id   INTEGER NOT NULL
                  PRIMARY KEY AUTOINCREMENT,
     text TEXT    UNIQUE
 );
-
-
--- Table: relations
 CREATE TABLE IF NOT EXISTS relations (
     id      INTEGER NOT NULL
                     PRIMARY KEY AUTOINCREMENT,
@@ -460,9 +446,6 @@ CREATE TABLE IF NOT EXISTS relations (
     )
     REFERENCES conf (id)
 );
-
-
--- Table: reset
 CREATE TABLE IF NOT EXISTS reset (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id     INTEGER,
@@ -474,15 +457,9 @@ CREATE TABLE IF NOT EXISTS reset (
     )
     REFERENCES user (id)
 );
-
-
--- Table: stop_words
 CREATE TABLE IF NOT EXISTS stop_words (
     word TEXT
 );
-
-
--- Table: user
 CREATE TABLE IF NOT EXISTS user (
     id         INTEGER NOT NULL
                        UNIQUE,
@@ -495,16 +472,7 @@ CREATE TABLE IF NOT EXISTS user (
     )
     ON CONFLICT REPLACE
 );
-
-
--- Table: word
 CREATE TABLE IF NOT EXISTS word (
     id   INTEGER PRIMARY KEY AUTOINCREMENT,
     word TEXT    UNIQUE
-);
-
-
-COMMIT TRANSACTION;
-PRAGMA foreign_keys = on;
-
-";
+);";
