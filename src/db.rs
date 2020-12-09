@@ -27,8 +27,7 @@ pub(crate) fn update_scheme() -> Result<()> {
     //let x = conn.execute(SCHEME, params![])?;
     for table in SCHEME.split(';').into_iter() {
         let t = table.trim();
-        if t != "" {        info!("{:?}", t);
-
+        if t != "" {
             conn.execute(t, params![])?;
         }
     }
@@ -38,8 +37,9 @@ pub(crate) fn update_scheme() -> Result<()> {
 
 pub(crate) fn get_user(id: telegram_bot::UserId) -> Result<telegram_bot::User, errors::Error> {
     let conn = open()?;
-    let mut stmt =
-        conn.prepare_cached("SELECT id, username, first_name, last_name, date FROM user WHERE id = :id")?;
+    let mut stmt = conn.prepare_cached(
+        "SELECT id, username, first_name, last_name, date FROM user WHERE id = :id",
+    )?;
 
     let mut rows = stmt.query_named(&[(":id", &id.to_string())])?;
     let mut users = Vec::new();
@@ -272,12 +272,13 @@ pub(crate) async fn add_file(
 
 pub(crate) async fn get_file(file_id: String) -> Result<i64, errors::Error> {
     let conn = open()?;
-    let file_rowid = match { conn.prepare_cached("SELECT rowid FROM file WHERE file_id = :file_id")? }
-        .query_row(params![file_id], |row| row.get(0))
-    {
-        Ok(id) => Ok(id),
-        Err(_) => Err(errors::Error::FileNotFound),
-    };
+    let file_rowid =
+        match { conn.prepare_cached("SELECT rowid FROM file WHERE file_id = :file_id")? }
+            .query_row(params![file_id], |row| row.get(0))
+        {
+            Ok(id) => Ok(id),
+            Err(_) => Err(errors::Error::FileNotFound),
+        };
 
     file_rowid
 }
@@ -288,13 +289,14 @@ async fn add_word(word: &String) -> Result<i64, errors::Error> {
         _ => {}
     }
     let conn = open()?;
-    let word_rowid = match { conn.prepare_cached("INSERT OR IGNORE INTO word('word') VALUES (:word)")? }
-        .insert(params![word])
-    {
-        Ok(id) => id,
-        Err(_) => { conn.prepare_cached("SELECT rowid FROM word WHERE word = (:word)")? }
-            .query_row(params![word], |row| row.get(0))?,
-    };
+    let word_rowid =
+        match { conn.prepare_cached("INSERT OR IGNORE INTO word('word') VALUES (:word)")? }
+            .insert(params![word])
+        {
+            Ok(id) => id,
+            Err(_) => { conn.prepare_cached("SELECT rowid FROM word WHERE word = (:word)")? }
+                .query_row(params![word], |row| row.get(0))?,
+        };
     Ok(word_rowid)
 }
 
@@ -337,13 +339,14 @@ pub(crate) async fn add_sentence(message: &telegram_bot::Message) -> Result<(), 
     let conn = open()?;
 
     // Save sentence
-    let msg_rowid = match { conn.prepare_cached("INSERT OR IGNORE INTO messages('text') VALUES (:text)")? }
-        .insert(params![text])
-    {
-        Ok(id) => id,
-        Err(_) => { conn.prepare_cached("SELECT rowid FROM messages WHERE text = (:text)")? }
-            .query_row(params![text], |row| row.get(0))?,
-    };
+    let msg_rowid =
+        match { conn.prepare_cached("INSERT OR IGNORE INTO messages('text') VALUES (:text)")? }
+            .insert(params![text])
+        {
+            Ok(id) => id,
+            Err(_) => { conn.prepare_cached("SELECT rowid FROM messages WHERE text = (:text)")? }
+                .query_row(params![text], |row| row.get(0))?,
+        };
 
     // Save stemmed words
     let words = utils::stemming(message).await?;

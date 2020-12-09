@@ -2,9 +2,9 @@ use crate::db;
 use crate::errors::Error;
 use html_escape::encode_text;
 use markov::Chain;
+use rand::Rng;
 use telegram_bot::prelude::*;
 use telegram_bot::{Api, Message, ParseMode};
-use rand::Rng;
 
 pub(crate) async fn here(api: Api, message: Message) -> Result<(), Error> {
     let members: Vec<telegram_bot::User> = db::get_members(message.chat.id()).unwrap();
@@ -73,8 +73,8 @@ pub(crate) async fn markov_all(api: Api, message: Message) -> Result<(), Error> 
         .send(message.text_reply(msg.trim()).parse_mode(ParseMode::Html))
         .await
     {
-        Ok(_) => debug!("/top command sent to {}", message.chat.id()),
-        Err(_) => warn!("/top command sent failed to {}", message.chat.id()),
+        Ok(_) => debug!("/markov_all command sent to {}", message.chat.id()),
+        Err(_) => warn!("/markov_all command sent failed to {}", message.chat.id()),
     }
     //api.send(message.chat.text("Text to message chat")).await?;
     //api.send(message.from.text("Private text")).await?;
