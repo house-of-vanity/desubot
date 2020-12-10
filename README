@@ -1,0 +1,12 @@
+Desubot
+Telegram bot with light group statistic and heavy spy features.
+
+== Features ==
+* Collect all the messages sent to group.
+* Collect all the media sent to group including voice, stickers, video, video notes, documents.
+* /here command to mention all members.
+* Alongside with saving whole message bot perform blacklist filter and stemming for every word (only Russian). "Красивую собаку мыли негры" -> "красивый собака мыть негр"
+* Generate sentences using Markov Chains trained on history with /markov_all.
+
+== TODO ==
+* Syntax highlighting for code exported to image.
