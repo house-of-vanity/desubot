@@ -2,10 +2,11 @@ use reqwest::Error as reqwest_error;
 use rusqlite::Error as sqlite_error;
 use serde_json::Error as serde_error;
 use std::{fmt, io::Error as io_error};
+use subprocess::PopenError as popen_error;
 use telegram_bot::Error as tg_error;
 
 #[derive(Debug)]
-pub(crate) enum Error {
+pub enum Error {
     UserNotFound,
     SQLITE3Error(sqlite_error),
     TelegramError(tg_error),
@@ -16,6 +17,7 @@ pub(crate) enum Error {
     IOError(io_error),
     FileNotFound,
     JsonParseError(serde_error),
+    PopenError(popen_error),
 }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -50,5 +52,11 @@ impl From<io_error> for Error {
 impl From<serde_error> for Error {
     fn from(e: serde_error) -> Error {
         return Error::JsonParseError(e);
+    }
+}
+
+impl From<popen_error> for Error {
+    fn from(e: popen_error) -> Error {
+        return Error::PopenError(e);
     }
 }

@@ -8,8 +8,6 @@ use uuid::Uuid;
 use crate::db;
 use crate::errors;
 extern crate reqwest;
-use serde_json::Value;
-use subprocess::Exec;
 
 pub(crate) fn get_title(message: &Message) -> String {
     match &message.chat {
@@ -97,32 +95,4 @@ pub(crate) async fn get_files(
         }
     };
     Ok(file_count)
-}
-
-pub(crate) async fn stemming(message: &Message) -> Result<Vec<String>, errors::Error> {
-    let mut words: Vec<String> = vec![];
-    let proc = Exec::shell("mystem -d --format json -l");
-    match proc
-        .stdin(message.text().unwrap().as_str())
-        .communicate()
-        .unwrap()
-        .read_string()
-        .unwrap()
-        .0
-    {
-        Some(line) => {
-            let v: Vec<Value> = match serde_json::from_str(line.as_str()) {
-                Ok(val) => val,
-                Err(_) => return Ok(vec![]),
-            };
-            for i in v {
-                words.push(i["analysis"][0]["lex"].to_string().replace("\"", ""));
-            }
-            words.retain(|x| x != "null");
-            //debug!("Parsed words: {}.", words.join(", "));
-        }
-        None => return Ok(vec![]),
-    };
-
-    Ok(words)
 }

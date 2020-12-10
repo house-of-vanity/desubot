@@ -9,9 +9,16 @@ use env_logger::Env;
 mod commands;
 mod db;
 mod errors;
+mod mystem;
 mod utils;
+use mystem::MyStem;
 
-async fn handler(api: Api, message: Message, token: String) -> Result<(), errors::Error> {
+async fn handler(
+    api: Api,
+    message: Message,
+    token: String,
+    mystem: &mut MyStem,
+) -> Result<(), errors::Error> {
     match message.kind {
         MessageKind::Text { ref data, .. } => {
             let title = utils::get_title(&message);
@@ -23,7 +30,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
                 &message.from.first_name,
                 data
             );
-            db::add_sentence(&message).await?;
+            db::add_sentence(&message, mystem).await?;
             match data.as_str() {
                 "/here" => commands::here(api, message).await?,
                 "/top" => commands::top(api, message).await?,
@@ -113,6 +120,7 @@ async fn handler(api: Api, message: Message, token: String) -> Result<(), errors
 #[tokio::main]
 async fn main() -> Result<(), errors::Error> {
     env_logger::from_env(Env::default().default_filter_or("info")).init();
+    let mut mystem = MyStem::new()?;
     match db::update_scheme() {
         Ok(_) => {}
         Err(e) => panic!("Database error: {:?}", e),
@@ -133,7 +141,7 @@ async fn main() -> Result<(), errors::Error> {
         if let UpdateKind::Message(message) = update.kind {
             db::add_user(message.clone()).await?;
             db::add_conf(message.clone()).await?;
-            handler(api.clone(), message, token.clone()).await?;
+            handler(api.clone(), message, token.clone(), &mut mystem).await?;
         }
     }
     Ok(())

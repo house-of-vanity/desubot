@@ -1,4 +1,5 @@
 use crate::errors;
+use crate::mystem;
 use crate::utils;
 use rusqlite::{named_params, params, Connection, Error, Result};
 use std::time::SystemTime;
@@ -334,7 +335,10 @@ async fn add_relation(word_id: i64, msg_id: i64, message: &Message) -> Result<i6
     Ok(rowid)
 }
 
-pub(crate) async fn add_sentence(message: &telegram_bot::Message) -> Result<(), errors::Error> {
+pub(crate) async fn add_sentence(
+    message: &telegram_bot::Message,
+    mystem: &mut mystem::MyStem,
+) -> Result<(), errors::Error> {
     let text = message.text().unwrap();
     let conn = open()?;
 
@@ -349,7 +353,7 @@ pub(crate) async fn add_sentence(message: &telegram_bot::Message) -> Result<(), 
         };
 
     // Save stemmed words
-    let words = utils::stemming(message).await?;
+    let words = mystem.stemming(text).await?;
     for word in words {
         match add_word(&word).await {
             Ok(id) => {
