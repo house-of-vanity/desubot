@@ -32,7 +32,7 @@ pub(crate) fn update_scheme() -> Result<()> {
             conn.execute(t, params![])?;
         }
     }
-    info!("Scheme updated.");
+    info!("Database schema updated.");
     Ok(())
 }
 
@@ -162,7 +162,7 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
                 id = :id",
             )?;
             stmt.execute_named(&[(":id", &update.id.to_string()), (":title", &update.title)])?;
-            //println!("Conf {:?} updated: {:?}", update.title, get_conf(update.id));
+            info!("Conf {:?} updated: {:?}", update.title, get_conf(update.id));
         }
         Err(_) => {
             let update = Conf {
@@ -173,7 +173,7 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
             let unix_time = utils::unixtime().await;
 
             let mut stmt = conn.prepare_cached(
-                "UPDATE conf
+                "INSERT OR IGNORE INTO conf
                 SET
                     title = :title,
                     date = :date

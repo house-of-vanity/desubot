@@ -11,111 +11,9 @@ mod db;
 mod errors;
 mod mystem;
 mod utils;
+mod handlers;
+
 use mystem::MyStem;
-
-async fn handler(
-    api: Api,
-    message: Message,
-    token: String,
-    mystem: &mut MyStem,
-) -> Result<(), errors::Error> {
-    match message.kind {
-        MessageKind::Text { ref data, .. } => {
-            let title = utils::get_title(&message);
-            info!(
-                "<{}({})>[{}({})]: {}",
-                &message.chat.id(),
-                title,
-                &message.from.id,
-                &message.from.first_name,
-                data
-            );
-            db::add_sentence(&message, mystem).await?;
-            match data.as_str() {
-                "/here" => commands::here(api, message).await?,
-                "/top" => commands::top(api, message).await?,
-                "/stat" => commands::top(api, message).await?,
-                "/markov_all" => commands::markov_all(api, message).await?,
-                _ => (),
-            }
-        }
-        MessageKind::Photo { ref caption, .. } => {
-            let title = utils::get_title(&message);
-            info!(
-                "<{}({})>[{}({})]: *PHOTO* {}",
-                &message.chat.id(),
-                title,
-                &message.from.id,
-                &message.from.first_name,
-                caption.clone().unwrap_or("NO_TITLE".to_string())
-            );
-            utils::get_files(api, message, token).await?;
-        }
-
-        MessageKind::Document { ref caption, .. } => {
-            let title = utils::get_title(&message);
-            info!(
-                "<{}({})>[{}({})]: *DOCUMENT* {}",
-                &message.chat.id(),
-                title,
-                &message.from.id,
-                &message.from.first_name,
-                caption.clone().unwrap_or("NO_TITLE".to_string())
-            );
-            utils::get_files(api, message, token).await?;
-        }
-
-        MessageKind::Sticker { .. } => {
-            let title = utils::get_title(&message);
-            info!(
-                "<{}({})>[{}({})]: *STICKER*",
-                &message.chat.id(),
-                title,
-                &message.from.id,
-                &message.from.first_name,
-            );
-            utils::get_files(api, message, token).await?;
-        }
-
-        MessageKind::Voice { .. } => {
-            let title = utils::get_title(&message);
-            info!(
-                "<{}({})>[{}({})]: *VOICE*",
-                &message.chat.id(),
-                title,
-                &message.from.id,
-                &message.from.first_name,
-            );
-            utils::get_files(api, message, token).await?;
-        }
-
-        MessageKind::Video { .. } => {
-            let title = utils::get_title(&message);
-            info!(
-                "<{}({})>[{}({})]: *VIDEO*",
-                &message.chat.id(),
-                title,
-                &message.from.id,
-                &message.from.first_name,
-            );
-            utils::get_files(api, message, token).await?;
-        }
-
-        MessageKind::VideoNote { .. } => {
-            let title = utils::get_title(&message);
-            info!(
-                "<{}({})>[{}({})]: *VIDEO_NOTE*",
-                &message.chat.id(),
-                title,
-                &message.from.id,
-                &message.from.first_name,
-            );
-            utils::get_files(api, message, token).await?;
-        }
-        _ => (),
-    };
-    Ok(())
-}
 
 #[tokio::main]
 async fn main() -> Result<(), errors::Error> {
@@ -133,15 +31,15 @@ async fn main() -> Result<(), errors::Error> {
         }
     };
     let api = Api::new(token.clone());
-    // Fetch new updates via long poll method
     let mut stream = api.stream();
+    let me = api.send(GetMe).await?;
+    info!("GetMe result: Username: {}, First Name: {}, ID {}", me.username.as_ref().unwrap(), me.first_name, me.id);
     while let Some(update) = stream.next().await {
-        // If the received update contains a new message...
         let update = update?;
         if let UpdateKind::Message(message) = update.kind {
-            db::add_user(message.clone()).await?;
             db::add_conf(message.clone()).await?;
-            handler(api.clone(), message, token.clone(), &mut mystem).await?;
+            db::add_user(message.clone()).await?;
+            handlers::handler(api.clone(), message, token.clone(), &mut mystem, me.clone()).await?;
         }
     }
     Ok(())

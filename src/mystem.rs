@@ -1,8 +1,6 @@
 use crate::errors;
 use serde_json::Value;
-use std::io::prelude::*;
-use std::io::BufReader;
-use std::io::{Error, Write};
+use std::io::{Error, Write, BufReader, prelude::*};
 use subprocess::{Popen, PopenConfig, PopenError, Redirection};
 
 pub struct MyStem {
