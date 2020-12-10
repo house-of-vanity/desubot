@@ -149,6 +149,7 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
 
     match get_conf(message.chat.id()) {
         Ok(_) => {
+            //info!("Group found: {:?}", message.chat.id());
             let update = Conf {
                 id: message.chat.id(),
                 title,
@@ -162,9 +163,11 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
                 id = :id",
             )?;
             stmt.execute_named(&[(":id", &update.id.to_string()), (":title", &update.title)])?;
-            info!("Conf {:?} updated: {:?}", update.title, get_conf(update.id));
+            //info!("Conf {:?} updated: {:?}", update.title, get_conf(update.id));
         }
         Err(_) => {
+            //info!("Group didn't found: {:?}", message.chat.id());
+
             let update = Conf {
                 id: message.chat.id(),
                 title,
@@ -173,19 +176,16 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
             let unix_time = utils::unixtime().await;
 
             let mut stmt = conn.prepare_cached(
-                "INSERT OR IGNORE INTO conf
-                SET
-                    title = :title,
-                    date = :date
-                WHERE
-                id = :id",
+                "INSERT OR IGNORE INTO
+                    conf('id', 'title', 'date')
+                    VALUES (:id, :title, :date)",
             )?;
             stmt.execute_named(&[
                 (":id", &update.id.to_string()),
                 (":title", &update.title),
                 (":date", &unix_time),
             ])?;
-            //println!("Conf {:?} added: {:?}", update.title, get_conf(update.id));
+            //info!("Conf {:?} added: {:?}", update.title, get_conf(update.id));
         }
     }
     Ok(())
