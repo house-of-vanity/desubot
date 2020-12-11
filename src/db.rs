@@ -123,6 +123,7 @@ pub(crate) async fn get_random_messages_group(
     let mut stmt = conn.prepare_cached("
     SELECT m.text FROM messages m
     LEFT JOIN relations r ON r.msg_id = m.id
+    WHERE r.conf_id = :conf_id
     ORDER BY RANDOM() LIMIT 50
     "
     )?;
