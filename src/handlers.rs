@@ -31,6 +31,7 @@ pub async fn handler(
                 "/top" => commands::top(api, message).await?,
                 "/stat" => commands::top(api, message).await?,
                 "/markov_all" => commands::markov_all(api, message).await?,
+                "/markov" => commands::markov(api, message).await?,
                 _ => (),
             }
         }

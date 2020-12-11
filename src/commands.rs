@@ -80,3 +80,24 @@ pub(crate) async fn markov_all(api: Api, message: Message) -> Result<(), Error> 
     //api.send(message.from.text("Private text")).await?;
     Ok(())
 }
+
+pub(crate) async fn markov(api: Api, message: Message) -> Result<(), Error> {
+    let messages = db::get_random_messages_group(&message).await?;
+    let mut chain = Chain::new();
+    chain.feed(messages);
+    let mut sentences = chain.generate();
+    let mut msg = String::new();
+    for _ in 1..rand::thread_rng().gen_range(2, 10) {
+        msg = format!("{} {}", msg, sentences.pop().unwrap());
+    }
+    match api
+        .send(message.text_reply(msg.trim()).parse_mode(ParseMode::Html))
+        .await
+    {
+        Ok(_) => debug!("/markov command sent to {}", message.chat.id()),
+        Err(_) => warn!("/markov command sent failed to {}", message.chat.id()),
+    }
+    //api.send(message.chat.text("Text to message chat")).await?;
+    //api.send(message.from.text("Private text")).await?;
+    Ok(())
+}
