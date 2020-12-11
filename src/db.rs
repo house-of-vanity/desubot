@@ -115,7 +115,10 @@ pub(crate) async fn get_random_messages() -> Result<Vec<String>, Error> {
     Ok(messages)
 }
 
-pub(crate) async fn get_random_messages_group() -> Result<Vec<String>, Error> {
+pub(crate) async fn get_random_messages_group(
+    message: &telegram_bot::Message
+) -> Result<Vec<String>, Error> {
+    let conf_id = i64::from(message.chat.id());
     let conn = open()?;
     let mut stmt = conn.prepare_cached("
     SELECT m.text FROM messages m
@@ -123,7 +126,7 @@ pub(crate) async fn get_random_messages_group() -> Result<Vec<String>, Error> {
     ORDER BY RANDOM() LIMIT 50
     "
     )?;
-    let mut rows = stmt.query_named(named_params![])?;
+    let mut rows = stmt.query_named(named_params! {":conf_id": conf_id})?;
     let mut messages = Vec::new();
 
     while let Some(row) = rows.next()? {

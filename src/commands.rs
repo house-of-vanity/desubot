@@ -82,7 +82,7 @@ pub(crate) async fn markov_all(api: Api, message: Message) -> Result<(), Error> 
 }
 
 pub(crate) async fn markov(api: Api, message: Message) -> Result<(), Error> {
-    let messages = db::get_random_messages_group().await?;
+    let messages = db::get_random_messages_group(&message).await?;
     let mut chain = Chain::new();
     chain.feed(messages);
     let mut sentences = chain.generate();
