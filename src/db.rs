@@ -115,6 +115,27 @@ pub(crate) async fn get_random_messages() -> Result<Vec<String>, Error> {
     Ok(messages)
 }
 
+pub(crate) async fn get_random_messages_group(
+    message: &telegram_bot::Message
+) -> Result<Vec<String>, Error> {
+    let conf_id = i64::from(message.chat.id());
+    let conn = open()?;
+    let mut stmt = conn.prepare_cached("
+    SELECT m.text FROM messages m
+    LEFT JOIN relations r ON r.msg_id = m.id
+    WHERE r.conf_id = :conf_id
+    ORDER BY RANDOM() LIMIT 50
+    "
+    )?;
+    let mut rows = stmt.query_named(named_params! {":conf_id": conf_id})?;
+    let mut messages = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        messages.push(row.get(0)?)
+    }
+    Ok(messages)
+}
+
 pub(crate) fn get_members(id: telegram_bot::ChatId) -> Result<Vec<telegram_bot::User>> {
     let conn = open()?;
     let mut stmt = conn.prepare_cached(
