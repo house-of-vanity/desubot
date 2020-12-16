@@ -79,10 +79,10 @@ jobs:
           tar xjf linux-amd64-github-release.tar.bz2
           export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
           for artifact in ./artifacts/*; do
-             ./bin/linux/amd64/github-release upload \\
-             -u ${{ steps.get_repo_data.outputs.AUTHOR }} \\
-             -r ${{ steps.get_repo_data.outputs.REPO_NAME }} \\
-             --tag ${{ steps.get_version.outputs.FULL_TAG }} \\
-             --name ${artifact}
+             ./bin/linux/amd64/github-release upload \
+             -u ${{ steps.get_repo_data.outputs.AUTHOR }} \
+             -r ${{ steps.get_repo_data.outputs.REPO_NAME }} \
+             --tag ${{ steps.get_version.outputs.FULL_TAG }} \
+             --name ${artifact} \
              --file ./artifact/${artifact}
           done
