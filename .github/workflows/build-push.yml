@@ -86,5 +86,4 @@ jobs:
              --name ${artifact} \
              --file ${artifact}
           done
-          ./bin/linux/amd64/github-release upload -u house-of-vanity -r furumi --tag ${{ steps.get_version.outputs.FULL_TAG }} --name arch_linux_furumi-${{ steps.get_version.outputs.VERSION }}-x86_64.pkg.tar.zst --file ./furumi-x86_64.pkg.tar.zst
 
