@@ -18,7 +18,13 @@ use mystem::MyStem;
 #[tokio::main]
 async fn main() -> Result<(), errors::Error> {
     env_logger::from_env(Env::default().default_filter_or("info")).init();
-    let mut mystem = MyStem::new()?;
+    let mut mystem = match MyStem::new() {
+        Ok(mystem) => mystem,
+        Err(e) => {
+            error!("MyStem init error. {:?}", e);
+            process::exit(0x0002);
+        }
+    };
     match db::update_scheme() {
         Ok(_) => {}
         Err(e) => panic!("Database error: {:?}", e),
