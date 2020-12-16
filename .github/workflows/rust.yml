@@ -2,21 +2,87 @@ name: Rust
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags: [ '*' ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  build-linux:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --verbose --release
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build --verbose --release
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v1
+        with:
+          name: desubot
+          path: ./target/release/desubot
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build --verbose --release
+      - name: Upload Windows binary
+        uses: actions/upload-artifact@v1
+        with:
+          name: desubot.exe
+          path: ./target/release/desubot.exe
+
+  publish:
+    name: Publish release
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the version (git tag)
+        id: get_version
+        run: |
+          echo ${GITHUB_REF/refs\/tags\/v/}
+          echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\/v/}
+          echo ::set-output name=FULL_TAG::${GITHUB_REF/refs\/tags\//}
+      - name: Get the repo data (git tag)
+        id: get_repo_data
+      - run: |
+          echo Repo: $GITHUB_REPOSITORY
+          echo ::set-output name=AUTHOR::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $1}')
+          echo ::set-output name=REPO_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+        shell: bash
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload binary assets
+        run: |
+          mkdir artifacts
+      - name: Download Linux binary
+        uses: actions/download-artifact@v1
+        with:
+          name: desubot
+          path: ./artifacts/
+      - name: Download Windows binary
+        uses: actions/download-artifact@v1
+        with:
+          name: desubot.exe
+          path: ./artifacts/
+      - name: Upload binary assets
+        run: |
+          wget https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2
+          tar xjf linux-amd64-github-release.tar.bz2
+          export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          for artifact in ./artifacts/*; do
+             ./bin/linux/amd64/github-release upload \\
+             -u ${{ steps.get_repo_data.outputs.AUTHOR }} \\
+             -r ${{ steps.get_repo_data.outputs.REPO_NAME }} \\
+             --tag ${{ steps.get_version.outputs.FULL_TAG }} \\
+             --name ${artifact}
+             --file ./artifact/${artifact}
+          done
