@@ -219,6 +219,14 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
 
     );
     debug!("{:?}", result);
+    match api
+        .send(message.text_reply(result.trim()).parse_mode(ParseMode::Html))
+        .await
+    {
+        Ok(_) => debug!("/omedeto command sent to {}", message.chat.id()),
+        Err(_) => warn!("/omedeto command sent failed to {}", message.chat.id()),
+    }
+
     // '^я [а-яА-Я]+(-[а-яА-Я]+(_[а-яА-Я]+)*)*$'
     Ok(())
 }
