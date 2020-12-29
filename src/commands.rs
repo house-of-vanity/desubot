@@ -2,7 +2,12 @@ use crate::db;
 use crate::errors::Error;
 use html_escape::encode_text;
 use markov::Chain;
+use mystem::Gender::Feminine;
+use mystem::MyStem;
+use mystem::Tense::{Past, Inpresent};
+use rand::seq::SliceRandom;
 use rand::Rng;
+use regex::Regex;
 use telegram_bot::prelude::*;
 use telegram_bot::{Api, Message, ParseMode};
 
@@ -61,7 +66,7 @@ pub(crate) async fn top(api: Api, message: Message) -> Result<(), Error> {
 }
 
 pub(crate) async fn markov_all(api: Api, message: Message) -> Result<(), Error> {
-    let messages = db::get_random_messages().await?;
+    let messages = db::get_messages_random_all().await?;
     let mut chain = Chain::new();
     chain.feed(messages);
     let mut sentences = chain.generate();
@@ -82,7 +87,7 @@ pub(crate) async fn markov_all(api: Api, message: Message) -> Result<(), Error> 
 }
 
 pub(crate) async fn markov(api: Api, message: Message) -> Result<(), Error> {
-    let messages = db::get_random_messages_group(&message).await?;
+    let messages = db::get_messages_random_group(&message).await?;
     let mut chain = Chain::new();
     chain.feed(messages);
     let mut sentences = chain.generate();
@@ -99,5 +104,121 @@ pub(crate) async fn markov(api: Api, message: Message) -> Result<(), Error> {
     }
     //api.send(message.chat.text("Text to message chat")).await?;
     //api.send(message.from.text("Private text")).await?;
+    Ok(())
+}
+
+pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> Result<(), Error> {
+    let all_msg = db::get_messages_user_all(&message).await?;
+    let re = Regex::new(r"^[яЯ] [а-яА-Я]+(-[а-яА-Я]+(_[а-яА-Я]+)*)*$").unwrap();
+    let mut nouns: Vec<String> = all_msg
+        .clone()
+        .into_iter()
+        .filter(|m| re.is_match(m))
+        .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
+        .filter(|m| {
+            let stem = mystem.stemming(m.clone()).unwrap_or_default();
+            match stem[0].lex[0].grammem.part_of_speech {
+                mystem::PartOfSpeech::Noun => true,
+                _ => false,
+            }
+        })
+        .collect();
+    nouns.sort();
+    nouns.dedup();
+    nouns.shuffle(&mut rand::thread_rng());
+
+    let mut verbs_p: Vec<String> = all_msg
+        .clone()
+        .into_iter()
+        .filter(|m| re.is_match(m))
+        .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
+        .filter(|m| {
+            let stem = mystem.stemming(m.clone()).unwrap_or_default();
+            match stem[0].lex[0].grammem.part_of_speech {
+                mystem::PartOfSpeech::Verb => stem[0].lex[0]
+                    .grammem
+                    .facts
+                    .contains(&mystem::Fact::Tense(Past)),
+                _ => false,
+            }
+        })
+        .collect();
+    verbs_p.sort();
+    verbs_p.dedup();
+    verbs_p.shuffle(&mut rand::thread_rng());
+
+    let mut verbs_i: Vec<String> = all_msg
+        .clone()
+        .into_iter()
+        .filter(|m| re.is_match(m))
+        .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
+        .filter(|m| {
+            let stem = mystem.stemming(m.clone()).unwrap_or_default();
+            match stem[0].lex[0].grammem.part_of_speech {
+                mystem::PartOfSpeech::Verb => stem[0].lex[0]
+                    .grammem
+                    .facts
+                    .contains(&mystem::Fact::Tense(Inpresent)),
+                _ => false,
+            }
+        })
+        .collect();
+    verbs_i.sort();
+    verbs_i.dedup();
+    verbs_i.shuffle(&mut rand::thread_rng());
+
+    if nouns.is_empty() {
+        nouns.push(message.from.first_name.to_string());
+    }
+    let start: Vec<String> = vec![
+        "С новыйм годом.".into(),
+        "С НГ тебя".into(),
+        "Поздравляю".into(),
+        "Поздравляю с НГ".into(),
+    ];
+    //debug!("Nouns: {:#?}", nouns);
+    //debug!("Verbs: {:#?}", verbs);
+
+    let fem = if mystem
+        .stemming(message.from.first_name.to_string())
+        .unwrap()[0]
+        .lex
+        .is_empty()
+    {
+        false
+    } else {
+        if mystem
+            .stemming(message.from.first_name.to_string())
+            .unwrap()[0]
+            .lex[0]
+            .grammem
+            .facts
+            .contains(&mystem::Fact::Gender(Feminine))
+        {
+            true
+        } else {
+            false
+        }
+    };
+    let result = format!(
+        "{} {} известн{} как {}, {}, а так же конечно {}. В прошедшем году ты часто давал{} нам знать, что ты {}, {} и {}. Не редко ты говорил{} я {}, я {} или даже я {}. =*",
+        start.choose(&mut rand::thread_rng()).unwrap(),
+        message.from.first_name.to_string(),
+        {if fem {"ая"} else {"ый"}},
+        nouns.pop().unwrap_or("=(".to_string()),
+        nouns.pop().unwrap_or("=(".to_string()),
+        nouns.pop().unwrap_or("=(".to_string()),
+        {if fem {"а"} else {""}},
+        verbs_p.pop().unwrap_or("=(".to_string()),
+        verbs_p.pop().unwrap_or("=(".to_string()),
+        verbs_p.pop().unwrap_or("=(".to_string()),
+        {if fem {"а"} else {""}},
+        verbs_i.pop().unwrap_or("=(".to_string()),
+        verbs_i.pop().unwrap_or("=(".to_string()),
+        verbs_i.pop().unwrap_or("=(".to_string()),
+
+    );
+    debug!("{:?}", result);
+    // '^я [а-яА-Я]+(-[а-яА-Я]+(_[а-яА-Я]+)*)*$'
     Ok(())
 }

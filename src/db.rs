@@ -1,6 +1,6 @@
 use crate::errors;
-use crate::mystem;
 use crate::utils;
+use futures::StreamExt;
 use rusqlite::{named_params, params, Connection, Error, Result};
 use std::time::SystemTime;
 use telegram_bot::*;
@@ -102,7 +102,7 @@ pub(crate) fn get_confs() -> Result<Vec<Conf>> {
     Ok(confs)
 }
  */
-pub(crate) async fn get_random_messages() -> Result<Vec<String>, Error> {
+pub(crate) async fn get_messages_random_all() -> Result<Vec<String>, Error> {
     let conn = open()?;
     let mut stmt = conn.prepare_cached("SELECT text FROM messages ORDER BY RANDOM() LIMIT 50")?;
     let mut rows = stmt.query_named(named_params![])?;
@@ -114,19 +114,64 @@ pub(crate) async fn get_random_messages() -> Result<Vec<String>, Error> {
     Ok(messages)
 }
 
-pub(crate) async fn get_random_messages_group(
-    message: &telegram_bot::Message
+pub(crate) async fn get_messages_random_group(
+    message: &telegram_bot::Message,
 ) -> Result<Vec<String>, Error> {
     let conf_id = i64::from(message.chat.id());
     let conn = open()?;
-    let mut stmt = conn.prepare_cached("
+    let mut stmt = conn.prepare_cached(
+        "
     SELECT m.text FROM messages m
     LEFT JOIN relations r ON r.msg_id = m.id
     WHERE r.conf_id = :conf_id
     ORDER BY RANDOM() LIMIT 50
-    "
+    ",
     )?;
     let mut rows = stmt.query_named(named_params! {":conf_id": conf_id})?;
+    let mut messages = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        messages.push(row.get(0)?)
+    }
+    Ok(messages)
+}
+
+pub(crate) async fn get_messages_user_group(
+    message: &telegram_bot::Message,
+) -> Result<Vec<String>, Error> {
+    let conf_id = i64::from(message.chat.id());
+    let user_id = i64::from(message.from.id);
+    let conn = open()?;
+    let mut stmt = conn.prepare_cached(
+        "
+    SELECT m.text FROM messages m
+    LEFT JOIN relations r ON r.msg_id = m.id
+    WHERE r.conf_id = :conf_id
+    AND r.user_id = :user_id
+    ",
+    )?;
+    let mut rows = stmt.query_named(named_params! {":conf_id": conf_id, ":user_id": user_id})?;
+    let mut messages = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        messages.push(row.get(0)?)
+    }
+    Ok(messages)
+}
+
+pub(crate) async fn get_messages_user_all(
+    message: &telegram_bot::Message,
+) -> Result<Vec<String>, Error> {
+    let user_id = i64::from(message.from.id);
+    let conn = open()?;
+    let mut stmt = conn.prepare_cached(
+        "
+    SELECT m.text FROM messages m
+    LEFT JOIN relations r ON r.msg_id = m.id
+    WHERE r.user_id = :user_id
+    ",
+    )?;
+    let mut rows = stmt.query_named(named_params! {":user_id": user_id})?;
     let mut messages = Vec::new();
 
     while let Some(row) = rows.next()? {
@@ -373,18 +418,21 @@ pub(crate) async fn add_sentence(
         };
 
     // Save stemmed words
-    let words = mystem.stemming(text).await?;
+    let words = mystem.stemming(text)?;
     conn.execute("BEGIN TRANSACTION", params![]);
     for word in words {
-        match add_word(&word).await {
+        if word.lex.is_empty() {
+            continue;
+        }
+        match add_word(&word.lex[0].lex).await {
             Ok(id) => {
-                debug!("Added {}: rowid: {}", &word, id);
+                debug!("Added {}: rowid: {}", &word.lex[0].lex, id);
                 match add_relation(id, msg_rowid, message).await {
                     Ok(_) => {}
                     Err(e) => panic!("SQLITE3 Error: Relations failed: {:?}", e),
                 }
             }
-            Err(_) => debug!("Word {} is in stop list.", &word),
+            Err(_) => debug!("Word {} is in stop list.", &word.lex[0].lex),
         }
     }
     conn.execute("END TRANSACTION", params![]);
@@ -423,5 +471,3 @@ pub(crate) async fn get_top(
     }
     Ok(top)
 }
-
-

@@ -1,10 +1,9 @@
-use telegram_bot::*;
-use crate::mystem::MyStem;
-use crate::errors;
-use crate::db;
 use crate::commands;
+use crate::db;
+use crate::errors;
 use crate::utils;
-
+use mystem::MyStem;
+use telegram_bot::*;
 
 pub async fn handler(
     api: Api,
@@ -13,7 +12,6 @@ pub async fn handler(
     mystem: &mut MyStem,
     me: User,
 ) -> Result<(), errors::Error> {
-
     match message.kind {
         MessageKind::Text { ref data, .. } => {
             let title = utils::get_title(&message);
@@ -32,6 +30,7 @@ pub async fn handler(
                 "/stat" => commands::top(api, message).await?,
                 "/markov_all" => commands::markov_all(api, message).await?,
                 "/markov" => commands::markov(api, message).await?,
+                "/omedeto" => commands::omedeto(api, message, mystem).await?,
                 _ => (),
             }
         }

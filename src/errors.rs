@@ -1,3 +1,4 @@
+use mystem::AppError as mystem_error;
 use reqwest::Error as reqwest_error;
 use rusqlite::Error as sqlite_error;
 use serde_json::Error as serde_error;
@@ -18,6 +19,7 @@ pub enum Error {
     FileNotFound,
     JsonParseError(serde_error),
     PopenError(popen_error),
+    MystemError(mystem_error),
 }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -58,5 +60,11 @@ impl From<serde_error> for Error {
 impl From<popen_error> for Error {
     fn from(e: popen_error) -> Error {
         return Error::PopenError(e);
+    }
+}
+
+impl From<mystem_error> for Error {
+    fn from(e: mystem_error) -> Error {
+        return Error::MystemError(e);
     }
 }

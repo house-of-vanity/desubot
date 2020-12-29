@@ -21,8 +21,9 @@ hyper-tls = { version = "0.4", optional = true  }
 futures = "0.3"
 hyper-rustls = { version = "0.19", optional = true }
 
-rusqlite = { version = "0.24.1", features = ["bundled"]}
+rusqlite = { version = "0.24.2", features = ["bundled"]}
 html-escape = "0.2"
+regex = "1"
 reqwest = "0.10.9"
 uuid = { version = "0.8", features = ["v4"] }
 sha1 = "*"
@@ -32,3 +33,4 @@ subprocess = "0.2.6"
 serde_json = "1.0"
 markov = "1.1.0"
 rand = "0.7.3"
+mystem = "0.2"

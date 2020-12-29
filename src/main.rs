@@ -9,9 +9,8 @@ use env_logger::Env;
 mod commands;
 mod db;
 mod errors;
-mod mystem;
-mod utils;
 mod handlers;
+mod utils;
 
 use mystem::MyStem;
 
@@ -39,7 +38,12 @@ async fn main() -> Result<(), errors::Error> {
     let api = Api::new(token.clone());
     let mut stream = api.stream();
     let me = api.send(GetMe).await?;
-    info!("GetMe result: Username: {}, First Name: {}, ID {}", me.username.as_ref().unwrap(), me.first_name, me.id);
+    info!(
+        "GetMe result: Username: {}, First Name: {}, ID {}",
+        me.username.as_ref().unwrap(),
+        me.first_name,
+        me.id
+    );
     while let Some(update) = stream.next().await {
         let update = update?;
         if let UpdateKind::Message(message) = update.kind {
