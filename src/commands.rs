@@ -3,13 +3,14 @@ use crate::errors::Error;
 use html_escape::encode_text;
 use markov::Chain;
 use mystem::Gender::Feminine;
-use mystem::MyStem;
+use mystem::{MyStem, VerbPerson};
 use mystem::Tense::{Inpresent, Past};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
 use telegram_bot::prelude::*;
 use telegram_bot::{Api, Message, ParseMode};
+use mystem::VerbPerson::First;
 
 pub(crate) async fn here(api: Api, message: Message) -> Result<(), Error> {
     let members: Vec<telegram_bot::User> = db::get_members(message.chat.id()).unwrap();
@@ -109,7 +110,7 @@ pub(crate) async fn markov(api: Api, message: Message) -> Result<(), Error> {
 
 pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> Result<(), Error> {
     let all_msg = db::get_messages_user_all(&message).await?;
-    let re = Regex::new(r"^[яЯ] [а-яА-Я]+(-[а-яА-Я]+(_[а-яА-Я]+)*)*$").unwrap();
+    let re = Regex::new(r"^[яЯ] [а-яА-Я]+(-[а-яА-Я]+(_[а-яА-Я]+)*)*").unwrap();
     let mut nouns: Vec<String> = all_msg
         .clone()
         .into_iter()
@@ -128,10 +129,12 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
                 }
             }
         })
+        .map(|w| w.replace(|z| z == '.' || z == ',', ""))
         .collect();
     nouns.sort();
     nouns.dedup();
     nouns.shuffle(&mut rand::thread_rng());
+    debug!("Found {} nouns.", nouns.len());
 
     let mut verbs_p: Vec<String> = all_msg
         .clone()
@@ -154,6 +157,7 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
                 }
             }
         })
+        .map(|w| w.replace(|z| z == '.' || z == ',', ""))
         .collect();
     verbs_p.sort();
     verbs_p.dedup();
@@ -175,11 +179,15 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
                     mystem::PartOfSpeech::Verb => stem[0].lex[0]
                         .grammem
                         .facts
-                        .contains(&mystem::Fact::Tense(Inpresent)),
+                        .contains(&mystem::Fact::Tense(Inpresent)) && stem[0].lex[0]
+                        .grammem
+                        .facts
+                        .contains(&mystem::Fact::Person(First)),
                     _ => false,
                 }
             }
         })
+        .map(|w| w.replace(|z| z == '.' || z == ',', ""))
         .collect();
     verbs_i.sort();
     verbs_i.dedup();
