@@ -1,11 +1,56 @@
-use crate::commands;
+//use crate::commands::Command;
+use crate::commands::{Execute, Here, Markov, MarkovAll, Omedeto, Top};
 use crate::db;
 use crate::errors;
 use crate::utils;
 use mystem::MyStem;
 use telegram_bot::*;
 
-//async fn detector()
+// struct Command {
+//     command: Commands,
+//     explicit: bool,
+//     rest: String,
+// }
+
+// async fn detector(msg: String, me: &User) -> Result<Command, ()> {
+//     let cleaned_message = msg.replace(&format!("@{}", me.clone().username.unwrap()), "");
+//     match cleaned_message.as_str() {
+//         "/here" => Ok(Command::Here {
+//             data: "".to_string(),
+//         }),
+//         s if s.contains("/here") => Ok(Command::Here {
+//             data: s.to_string(),
+//         }),
+//         "/top" => Ok(Command::Top {
+//             data: "".to_string(),
+//         }),
+//         "/stat" => Ok(Command::Top {
+//             data: "".to_string(),
+//         }),
+//         s if s.contains(|z| z == "/top" || z == "/stat") => Ok(Command::Top {
+//             data: s.to_string(),
+//         }),
+//         "/markov_all" => Ok(Command::MarkovAll {
+//             data: "".to_string(),
+//         }),
+//         s if s.contains("/markov_all") => Ok(Command::MarkovAll {
+//             data: s.to_string(),
+//         }),
+//         "/markov" => Ok(Command::Markov {
+//             data: "".to_string(),
+//         }),
+//         s if s.contains("/markov") => Ok(Command::Markov {
+//             data: s.to_string(),
+//         }),
+//         "/omedeto" => Ok(Command::Omedeto {
+//             data: "".to_string(),
+//         }),
+//         s if s.contains("/Omedeto") => Ok(Command::Omedeto {
+//             data: s.to_string(),
+//         }),
+//         _ => Err(()),
+//     }
+// }
 
 pub async fn handler(
     api: Api,
@@ -27,15 +72,51 @@ pub async fn handler(
             );
             db::add_sentence(&message, mystem).await?;
             let cleaned_message = data
-                .to_string()
-                .replace(&format!("@{}", me.username.unwrap()), "");
+                .replace(&format!("@{}", me.clone().username.unwrap()), "");
+            debug!("Cleaned - {}", cleaned_message);
             match cleaned_message.as_str() {
-                "/here" => commands::here(api, message).await?,
-                "/top" => commands::top(api, message).await?,
-                "/stat" => commands::top(api, message).await?,
-                "/markov_all" => commands::markov_all(api, message).await?,
-                "/markov" => commands::markov(api, message).await?,
-                "/omedeto" => commands::omedeto(api, message, mystem).await?,
+                s if s.contains("/here") => {
+                    Here {
+                        data: "".to_string(),
+                    }
+                    .run(api, message)
+                    .await?
+                }
+                "/top" => {
+                    Top {
+                        data: "".to_string(),
+                    }
+                    .run(api, message)
+                    .await?
+                }
+                "/stat" => {
+                    Top {
+                        data: "".to_string(),
+                    }
+                    .run(api, message)
+                    .await?
+                }
+                "/markov_all" => {
+                    MarkovAll {
+                        data: "".to_string(),
+                    }
+                    .run(api, message)
+                    .await?
+                }
+                "/markov" => {
+                    Markov {
+                        data: "".to_string(),
+                    }
+                    .run(api, message)
+                    .await?
+                }
+                "/omedeto" => {
+                    Omedeto {
+                        data: "".to_string(),
+                    }
+                    .run_mystem(api, message, mystem)
+                    .await?
+                }
                 _ => (),
             }
         }

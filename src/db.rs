@@ -1,6 +1,5 @@
 use crate::errors;
 use crate::utils;
-use futures::StreamExt;
 use rusqlite::{named_params, params, Connection, Error, Result};
 use std::time::SystemTime;
 use telegram_bot::*;
@@ -136,6 +135,7 @@ pub(crate) async fn get_messages_random_group(
     Ok(messages)
 }
 
+#[allow(dead_code)]
 pub(crate) async fn get_messages_user_group(
     message: &telegram_bot::Message,
 ) -> Result<Vec<String>, Error> {
@@ -400,6 +400,7 @@ async fn add_relation(word_id: i64, msg_id: i64, message: &Message) -> Result<i6
     Ok(rowid)
 }
 
+#[allow(unused_must_use)]
 pub(crate) async fn add_sentence(
     message: &telegram_bot::Message,
     mystem: &mut mystem::MyStem,
