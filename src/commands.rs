@@ -237,24 +237,30 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
                 } else {
                     match stem[0].lex[0].grammem.part_of_speech {
                         mystem::PartOfSpeech::Verb => {
-                            if stem[0].lex[0]
-                                .grammem
-                                .facts
-                                .contains(&mystem::Fact::Gender(Feminine)) &&
-                                stem[0].lex[0]
+                            match stem[0].lex[0]
                                 .grammem
                                 .facts
                                 .contains(&mystem::Fact::Tense(Past))
-                                {
-                                fm = fm + 1;
-                            } else {
-                                mu = mu + 1;
+                            {
+                                true => {
+                                    if stem[0].lex[0]
+                                        .grammem
+                                        .facts
+                                        .contains(&mystem::Fact::Gender(Feminine))
+                                    {
+                                        fm = fm + 1;
+                                    } else {
+                                        mu = mu + 1;
+                                    }
+                                }
+                                false => (),
                             }
                         }
                         _ => (),
                     }
                 }
-            }).collect::<()>();
+            })
+            .collect::<()>();
         debug!("fm - {}, mu - {}", fm, mu);
         if fm >= mu {
             true
