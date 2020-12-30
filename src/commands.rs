@@ -194,6 +194,13 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
         "Поздравляю".into(),
         "Поздравляю с НГ".into(),
     ];
+    let placeholders: Vec<String> = vec![
+        "[ДАННЫЕ УДАЛЕНЫ]".into(),
+        "[СЕКРЕТНО]".into(),
+        "[НЕТ ДАННЫХ]".into(),
+        "[ОШИБКА ДОСТУПА]".into(),
+        "[XXXX]".into(),
+    ];
     //debug!("Nouns: {:#?}", nouns);
     //debug!("Verbs: {:#?}", verbs);
 
@@ -223,17 +230,17 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
         start.choose(&mut rand::thread_rng()).unwrap(),
         message.from.first_name.to_string(),
         {if fem {"ая"} else {"ый"}},
-        nouns.pop().unwrap_or("[ДАННЫЕ УДАЛЕНЫ]".to_string()),
-        nouns.pop().unwrap_or("[ДАННЫЕ ЗАСЕКРЕЧЕНЫ]".to_string()),
-        nouns.pop().unwrap_or("[ДАННЫЕ УДАЛЕНЫ]".to_string()),
+        nouns.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+        nouns.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+        nouns.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
         {if fem {"а"} else {""}},
-        verbs_p.pop().unwrap_or("[СЕКРЕТНО]".to_string()),
-        verbs_p.pop().unwrap_or("[ДАННЫЕ УДАЛЕНЫ]".to_string()),
-        verbs_p.pop().unwrap_or("[ДАННЫЕ ЗАСЕКРЕЧЕНЫ]".to_string()),
+        verbs_p.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+        verbs_p.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+        verbs_p.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
         {if fem {"а"} else {""}},
-        verbs_i.pop().unwrap_or("[ДАННЫЕ УДАЛЕНЫ]".to_string()),
-        verbs_i.pop().unwrap_or("[ДАННЫЕ ЗАСЕКРЕЧЕНЫ]".to_string()),
-        verbs_i.pop().unwrap_or("[СЕКРЕТНО]".to_string()),
+        verbs_i.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+        verbs_i.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+        verbs_i.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
 
     );
     debug!("{:?}", result);
