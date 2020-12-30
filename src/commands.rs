@@ -166,7 +166,7 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
     verbs_p.sort();
     verbs_p.dedup();
     verbs_p.shuffle(&mut rand::thread_rng());
-    debug!("Found {} nouns. {:#?}", verbs_p.len(), verbs_p);
+    debug!("Found {} past verbs. {:#?}", verbs_p.len(), verbs_p);
 
     let mut verbs_i: Vec<String> = all_msg
         .clone()
@@ -200,13 +200,13 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
     verbs_i.sort();
     verbs_i.dedup();
     verbs_i.shuffle(&mut rand::thread_rng());
-    debug!("Found {} nouns. {:#?}", verbs_i.len(), verbs_i);
+    debug!("Found {} inpresent verbs. {:#?}", verbs_i.len(), verbs_i);
 
     if nouns.is_empty() {
         nouns.push(message.from.first_name.to_string());
     }
     let start: Vec<String> = vec![
-        "С новыйм годом.".into(),
+        "С новым годом".into(),
         "С НГ тебя".into(),
         "Поздравляю".into(),
         "Поздравляю с НГ".into(),
@@ -216,27 +216,53 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
         "[СЕКРЕТНО]".into(),
         "[НЕТ ДАННЫХ]".into(),
         "[ОШИБКА ДОСТУПА]".into(),
-        "[XXXX]".into(),
     ];
     //debug!("Nouns: {:#?}", nouns);
     //debug!("Verbs: {:#?}", verbs);
 
     let fem = {
-        let z = mystem
-            .stemming(message.from.first_name.to_string())
-            .unwrap();
-        debug!("{:#?}", z);
-        if z.is_empty() {
-            false
-        } else if z[0].lex.is_empty() {
-            false
+        let mut fm = 0;
+        let mut mu = 0;
+        all_msg
+            .clone()
+            .into_iter()
+            .filter(|m| re.is_match(m))
+            .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
+            .map(|m| {
+                let stem = mystem.stemming(m.clone()).unwrap_or_default();
+                if stem.is_empty() {
+                    ()
+                } else if stem[0].lex.is_empty() {
+                    ()
+                } else {
+                    match stem[0].lex[0].grammem.part_of_speech {
+                        mystem::PartOfSpeech::Verb => {
+                            if stem[0].lex[0]
+                                .grammem
+                                .facts
+                                .contains(&mystem::Fact::Gender(Feminine)) &&
+                                stem[0].lex[0]
+                                .grammem
+                                .facts
+                                .contains(&mystem::Fact::Tense(Past))
+                                {
+                                fm = fm + 1;
+                            } else {
+                                mu = mu + 1;
+                            }
+                        }
+                        _ => (),
+                    }
+                }
+            }).collect::<()>();
+        debug!("fm - {}, mu - {}", fm, mu);
+        if fm >= mu {
+            true
         } else {
-            z[0].lex[0]
-                .grammem
-                .facts
-                .contains(&mystem::Fact::Gender(Feminine))
+            false
         }
     };
+    debug!("Is Feminine - {}", fem);
     let result = format!(
         "{} {} известн{} как {}, {}, а так же конечно {}. В прошедшем году ты часто давал{} нам знать, что ты {}, {} и {}. Нередко ты говорил{} я {}, я {} или даже я {}. =*",
         start.choose(&mut rand::thread_rng()).unwrap(),

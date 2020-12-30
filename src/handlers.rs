@@ -29,7 +29,6 @@ pub async fn handler(
             let cleaned_message = data
                 .to_string()
                 .replace(&format!("@{}", me.username.unwrap()), "");
-            debug!("{}", cleaned_message);
             match cleaned_message.as_str() {
                 "/here" => commands::here(api, message).await?,
                 "/top" => commands::top(api, message).await?,
