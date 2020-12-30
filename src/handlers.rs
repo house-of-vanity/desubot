@@ -5,6 +5,8 @@ use crate::utils;
 use mystem::MyStem;
 use telegram_bot::*;
 
+//async fn detector()
+
 pub async fn handler(
     api: Api,
     message: Message,
@@ -24,7 +26,11 @@ pub async fn handler(
                 data
             );
             db::add_sentence(&message, mystem).await?;
-            match data.as_str() {
+            let cleaned_message = data
+                .to_string()
+                .replace(&format!("@{}", me.username.unwrap()), "");
+            debug!("{}", cleaned_message);
+            match cleaned_message.as_str() {
                 "/here" => commands::here(api, message).await?,
                 "/top" => commands::top(api, message).await?,
                 "/stat" => commands::top(api, message).await?,

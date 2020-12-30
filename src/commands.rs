@@ -2,16 +2,16 @@ use crate::db;
 use crate::errors::Error;
 use html_escape::encode_text;
 use markov::Chain;
+use mystem::Case::Nominative;
 use mystem::Gender::Feminine;
-use mystem::{MyStem, VerbPerson};
 use mystem::Tense::{Inpresent, Past};
+use mystem::VerbPerson::First;
+use mystem::{MyStem, VerbPerson};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
 use telegram_bot::prelude::*;
 use telegram_bot::{Api, Message, ParseMode};
-use mystem::VerbPerson::First;
-use mystem::Case::Nominative;
 
 pub(crate) async fn here(api: Api, message: Message) -> Result<(), Error> {
     let members: Vec<telegram_bot::User> = db::get_members(message.chat.id()).unwrap();
@@ -138,7 +138,7 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
     nouns.sort();
     nouns.dedup();
     nouns.shuffle(&mut rand::thread_rng());
-    debug!("Found {} nouns.", nouns.len());
+    debug!("Found {} nouns. {:#?}", nouns.len(), nouns);
 
     let mut verbs_p: Vec<String> = all_msg
         .clone()
@@ -166,6 +166,7 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
     verbs_p.sort();
     verbs_p.dedup();
     verbs_p.shuffle(&mut rand::thread_rng());
+    debug!("Found {} nouns. {:#?}", verbs_p.len(), verbs_p);
 
     let mut verbs_i: Vec<String> = all_msg
         .clone()
@@ -180,13 +181,16 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
                 false
             } else {
                 match stem[0].lex[0].grammem.part_of_speech {
-                    mystem::PartOfSpeech::Verb => stem[0].lex[0]
-                        .grammem
-                        .facts
-                        .contains(&mystem::Fact::Tense(Inpresent)) && stem[0].lex[0]
-                        .grammem
-                        .facts
-                        .contains(&mystem::Fact::Person(First)),
+                    mystem::PartOfSpeech::Verb => {
+                        stem[0].lex[0]
+                            .grammem
+                            .facts
+                            .contains(&mystem::Fact::Tense(Inpresent))
+                            && stem[0].lex[0]
+                                .grammem
+                                .facts
+                                .contains(&mystem::Fact::Person(First))
+                    }
                     _ => false,
                 }
             }
@@ -196,6 +200,7 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
     verbs_i.sort();
     verbs_i.dedup();
     verbs_i.shuffle(&mut rand::thread_rng());
+    debug!("Found {} nouns. {:#?}", verbs_i.len(), verbs_i);
 
     if nouns.is_empty() {
         nouns.push(message.from.first_name.to_string());
@@ -220,21 +225,16 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
         let z = mystem
             .stemming(message.from.first_name.to_string())
             .unwrap();
-
+        debug!("{:#?}", z);
         if z.is_empty() {
             false
         } else if z[0].lex.is_empty() {
             false
         } else {
-            if z[0].lex[0]
+            z[0].lex[0]
                 .grammem
                 .facts
                 .contains(&mystem::Fact::Gender(Feminine))
-            {
-                true
-            } else {
-                false
-            }
         }
     };
     let result = format!(
@@ -267,7 +267,5 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
         Ok(_) => debug!("/omedeto command sent to {}", message.chat.id()),
         Err(_) => warn!("/omedeto command sent failed to {}", message.chat.id()),
     }
-
-    // '^я [а-яА-Я]+(-[а-яА-Я]+(_[а-яА-Я]+)*)*$'
     Ok(())
 }
