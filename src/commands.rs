@@ -11,6 +11,7 @@ use regex::Regex;
 use telegram_bot::prelude::*;
 use telegram_bot::{Api, Message, ParseMode};
 use mystem::VerbPerson::First;
+use mystem::Case::Nominative;
 
 pub(crate) async fn here(api: Api, message: Message) -> Result<(), Error> {
     let members: Vec<telegram_bot::User> = db::get_members(message.chat.id()).unwrap();
@@ -124,7 +125,10 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
                 false
             } else {
                 match stem[0].lex[0].grammem.part_of_speech {
-                    mystem::PartOfSpeech::Noun => true,
+                    mystem::PartOfSpeech::Noun => stem[0].lex[0]
+                        .grammem
+                        .facts
+                        .contains(&mystem::Fact::Case(Nominative)),
                     _ => false,
                 }
             }
