@@ -6,8 +6,8 @@ use markov::Chain;
 use mystem::Case::Nominative;
 use mystem::Gender::Feminine;
 use mystem::Tense::{Inpresent, Past};
-use mystem::VerbPerson::First;
-use mystem::{MyStem, VerbPerson};
+use mystem::Person::First;
+use mystem::MyStem;
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
@@ -81,6 +81,7 @@ impl Execute for Here {
         Ok(())
     }
 
+    #[allow(unused_variables)]
     async fn run_mystem(
         &self,
         api: Api,
@@ -117,6 +118,7 @@ impl Execute for Top {
         Ok(())
     }
 
+    #[allow(unused_variables)]
     async fn run_mystem(
         &self,
         api: Api,
@@ -150,6 +152,7 @@ impl Execute for MarkovAll {
         Ok(())
     }
 
+    #[allow(unused_variables)]
     async fn run_mystem(
         &self,
         api: Api,
@@ -183,6 +186,7 @@ impl Execute for Markov {
         Ok(())
     }
 
+    #[allow(unused_variables)]
     async fn run_mystem(
         &self,
         api: Api,
@@ -195,10 +199,12 @@ impl Execute for Markov {
 
 #[async_trait]
 impl Execute for Omedeto {
+    #[allow(unused_variables)]
     async fn run(&self, api: Api, message: Message) -> Result<(), Error> {
         unimplemented!()
     }
 
+    #[warn(unused_must_use)]
     async fn run_mystem(
         &self,
         api: Api,
@@ -355,7 +361,7 @@ impl Execute for Omedeto {
                         }
                     }
                 })
-                .collect::<()>();
+                .for_each(drop);
             //debug!("fm - {}, mu - {}", fm, mu);
             if fm >= mu {
                 true

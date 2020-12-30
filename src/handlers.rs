@@ -104,7 +104,7 @@ pub async fn handler(
                     .await?
                 }
                 "/markov" => {
-                    MarkovAll {
+                    Markov {
                         data: "".to_string(),
                     }
                     .run(api, message)
