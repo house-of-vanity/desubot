@@ -4,7 +4,7 @@ use html_escape::encode_text;
 use markov::Chain;
 use mystem::Gender::Feminine;
 use mystem::MyStem;
-use mystem::Tense::{Past, Inpresent};
+use mystem::Tense::{Inpresent, Past};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
@@ -117,9 +117,15 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
         .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
         .filter(|m| {
             let stem = mystem.stemming(m.clone()).unwrap_or_default();
-            match stem[0].lex[0].grammem.part_of_speech {
-                mystem::PartOfSpeech::Noun => true,
-                _ => false,
+            if stem.is_empty() {
+                false
+            } else if stem[0].lex.is_empty() {
+                false
+            } else {
+                match stem[0].lex[0].grammem.part_of_speech {
+                    mystem::PartOfSpeech::Noun => true,
+                    _ => false,
+                }
             }
         })
         .collect();
@@ -134,12 +140,18 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
         .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
         .filter(|m| {
             let stem = mystem.stemming(m.clone()).unwrap_or_default();
-            match stem[0].lex[0].grammem.part_of_speech {
-                mystem::PartOfSpeech::Verb => stem[0].lex[0]
-                    .grammem
-                    .facts
-                    .contains(&mystem::Fact::Tense(Past)),
-                _ => false,
+            if stem.is_empty() {
+                false
+            } else if stem[0].lex.is_empty() {
+                false
+            } else {
+                match stem[0].lex[0].grammem.part_of_speech {
+                    mystem::PartOfSpeech::Verb => stem[0].lex[0]
+                        .grammem
+                        .facts
+                        .contains(&mystem::Fact::Tense(Past)),
+                    _ => false,
+                }
             }
         })
         .collect();
@@ -154,12 +166,18 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
         .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
         .filter(|m| {
             let stem = mystem.stemming(m.clone()).unwrap_or_default();
-            match stem[0].lex[0].grammem.part_of_speech {
-                mystem::PartOfSpeech::Verb => stem[0].lex[0]
-                    .grammem
-                    .facts
-                    .contains(&mystem::Fact::Tense(Inpresent)),
-                _ => false,
+            if stem.is_empty() {
+                false
+            } else if stem[0].lex.is_empty() {
+                false
+            } else {
+                match stem[0].lex[0].grammem.part_of_speech {
+                    mystem::PartOfSpeech::Verb => stem[0].lex[0]
+                        .grammem
+                        .facts
+                        .contains(&mystem::Fact::Tense(Inpresent)),
+                    _ => false,
+                }
             }
         })
         .collect();
@@ -179,25 +197,25 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
     //debug!("Nouns: {:#?}", nouns);
     //debug!("Verbs: {:#?}", verbs);
 
-    let fem = if mystem
-        .stemming(message.from.first_name.to_string())
-        .unwrap()[0]
-        .lex
-        .is_empty()
-    {
-        false
-    } else {
-        if mystem
+    let fem = {
+        let z = mystem
             .stemming(message.from.first_name.to_string())
-            .unwrap()[0]
-            .lex[0]
-            .grammem
-            .facts
-            .contains(&mystem::Fact::Gender(Feminine))
-        {
-            true
-        } else {
+            .unwrap();
+
+        if z.is_empty() {
             false
+        } else if z[0].lex.is_empty() {
+            false
+        } else {
+            if z[0].lex[0]
+                .grammem
+                .facts
+                .contains(&mystem::Fact::Gender(Feminine))
+            {
+                true
+            } else {
+                false
+            }
         }
     };
     let result = format!(
@@ -220,7 +238,11 @@ pub(crate) async fn omedeto(api: Api, message: Message, mystem: &mut MyStem) -> 
     );
     debug!("{:?}", result);
     match api
-        .send(message.text_reply(result.trim()).parse_mode(ParseMode::Html))
+        .send(
+            message
+                .text_reply(result.trim())
+                .parse_mode(ParseMode::Html),
+        )
         .await
     {
         Ok(_) => debug!("/omedeto command sent to {}", message.chat.id()),
