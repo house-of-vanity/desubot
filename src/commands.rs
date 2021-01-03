@@ -12,8 +12,6 @@ use mystem::Tense::{Inpresent, Past};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
-use rusqlite::types::FromSql;
-use rusqlite::{CachedStatement, Rows, ToSql};
 use sqlparser::ast::Statement;
 use sqlparser::dialect::GenericDialect;
 use sqlparser::parser::Parser;
@@ -69,7 +67,7 @@ impl Execute for Sql {
             }
         };
         let ast = match ast {
-            Err(e) => {
+            Err(_) => {
                 let _ = api
                     .send(
                         message
@@ -89,10 +87,10 @@ impl Execute for Sql {
             _ => match ast[0] {
                 sqlparser::ast::Statement::Query { .. } => {
                     let conn = db::open()?;
-                    let mut x = match conn.prepare_cached(&sql) {
+                    let x = match conn.prepare_cached(&sql) {
                         Ok(mut stmt) => {
                             let query = match stmt.query(rusqlite::NO_PARAMS) {
-                                Err(e) => Err(SQLInvalidCommand),
+                                Err(_) => Err(SQLInvalidCommand),
                                 Ok(mut rows) => {
                                     let mut res: Vec<Vec<String>> = match rows.column_names() {
                                         Some(n) => vec![n
@@ -122,7 +120,7 @@ impl Execute for Sql {
                                                 Some(rusqlite::types::Value::Integer(t)) => {
                                                     tmp.push(t.to_string())
                                                 }
-                                                Some(rusqlite::types::Value::Blob(t)) => {
+                                                Some(rusqlite::types::Value::Blob(_)) => {
                                                     tmp.push("Binary".to_string())
                                                 }
                                                 Some(rusqlite::types::Value::Real(t)) => {
@@ -223,6 +221,7 @@ impl Execute for Sql {
         Ok(())
     }
 
+    #[allow(unused_variables)]
     async fn run_mystem(
         &self,
         api: Api,
