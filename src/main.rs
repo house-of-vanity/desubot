@@ -49,7 +49,12 @@ async fn main() -> Result<(), errors::Error> {
         if let UpdateKind::Message(message) = update.kind {
             db::add_conf(message.clone()).await?;
             db::add_user(message.clone()).await?;
-            handlers::handler(api.clone(), message, token.clone(), &mut mystem, me.clone()).await?;
+            match handlers::handler(api.clone(), message, token.clone(), &mut mystem, me.clone())
+                .await
+            {
+                Ok(_) => {}
+                Err(e) => warn!("An error occurred handling command. {:?}", e),
+            }
         }
     }
     Ok(())

@@ -1,56 +1,10 @@
 //use crate::commands::Command;
-use crate::commands::{Execute, Here, Markov, MarkovAll, Omedeto, Top};
+use crate::commands::{Execute, Here, Markov, MarkovAll, Omedeto, Sql, Top};
 use crate::db;
 use crate::errors;
 use crate::utils;
 use mystem::MyStem;
 use telegram_bot::*;
-
-// struct Command {
-//     command: Commands,
-//     explicit: bool,
-//     rest: String,
-// }
-
-// async fn detector(msg: String, me: &User) -> Result<Command, ()> {
-//     let cleaned_message = msg.replace(&format!("@{}", me.clone().username.unwrap()), "");
-//     match cleaned_message.as_str() {
-//         "/here" => Ok(Command::Here {
-//             data: "".to_string(),
-//         }),
-//         s if s.contains("/here") => Ok(Command::Here {
-//             data: s.to_string(),
-//         }),
-//         "/top" => Ok(Command::Top {
-//             data: "".to_string(),
-//         }),
-//         "/stat" => Ok(Command::Top {
-//             data: "".to_string(),
-//         }),
-//         s if s.contains(|z| z == "/top" || z == "/stat") => Ok(Command::Top {
-//             data: s.to_string(),
-//         }),
-//         "/markov_all" => Ok(Command::MarkovAll {
-//             data: "".to_string(),
-//         }),
-//         s if s.contains("/markov_all") => Ok(Command::MarkovAll {
-//             data: s.to_string(),
-//         }),
-//         "/markov" => Ok(Command::Markov {
-//             data: "".to_string(),
-//         }),
-//         s if s.contains("/markov") => Ok(Command::Markov {
-//             data: s.to_string(),
-//         }),
-//         "/omedeto" => Ok(Command::Omedeto {
-//             data: "".to_string(),
-//         }),
-//         s if s.contains("/Omedeto") => Ok(Command::Omedeto {
-//             data: s.to_string(),
-//         }),
-//         _ => Err(()),
-//     }
-// }
 
 pub async fn handler(
     api: Api,
@@ -71,13 +25,18 @@ pub async fn handler(
                 data
             );
             db::add_sentence(&message, mystem).await?;
-            let cleaned_message = data
-                .replace(&format!("@{}", me.clone().username.unwrap()), "");
-            debug!("Cleaned - {}", cleaned_message);
+            let cleaned_message = data.replace(&format!("@{}", me.clone().username.unwrap()), "");
             match cleaned_message.as_str() {
                 s if s.contains("/here") => {
                     Here {
                         data: "".to_string(),
+                    }
+                    .run(api, message)
+                    .await?
+                }
+                s if s.to_string().starts_with("/sql") => {
+                    Sql {
+                        data: s.replace("/sql ", ""),
                     }
                     .run(api, message)
                     .await?
