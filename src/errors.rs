@@ -20,6 +20,8 @@ pub enum Error {
     JsonParseError(serde_error),
     PopenError(popen_error),
     MystemError(mystem_error),
+    SQLBannedCommand,
+    SQLInvalidCommand,
 }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

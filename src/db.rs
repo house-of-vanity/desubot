@@ -81,7 +81,7 @@ pub(crate) fn get_conf(id: telegram_bot::ChatId) -> Result<Conf, errors::Error> 
     }
 }
 
-/*
+#[allow(dead_code)]
 pub(crate) fn get_confs() -> Result<Vec<Conf>> {
     let conn = open()?;
     let mut stmt = conn.prepare("SELECT id, title, date FROM conf")?;
@@ -100,7 +100,7 @@ pub(crate) fn get_confs() -> Result<Vec<Conf>> {
 
     Ok(confs)
 }
- */
+
 pub(crate) async fn get_messages_random_all() -> Result<Vec<String>, Error> {
     let conn = open()?;
     let mut stmt = conn.prepare_cached("SELECT text FROM messages ORDER BY RANDOM() LIMIT 50")?;
@@ -345,7 +345,6 @@ pub(crate) async fn get_file(file_id: String) -> Result<i64, errors::Error> {
             Ok(id) => Ok(id),
             Err(_) => Err(errors::Error::FileNotFound),
         };
-
     file_rowid
 }
 
