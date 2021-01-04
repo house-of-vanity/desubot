@@ -192,7 +192,7 @@ impl Execute for Sql {
                     let _ = api
                         .send(
                             message
-                                .text_reply(format!("❌ An error ocurred {}❌", e))
+                                .text_reply(format!("❌ An error occurred {}❌", e))
                                 .parse_mode(ParseMode::Html),
                         )
                         .await;
@@ -393,8 +393,7 @@ impl Execute for Omedeto {
         let all_msg = db::get_messages_user_all(&message).await?;
         let re = Regex::new(r"^[яЯ] [а-яА-Я]+(-[а-яА-Я]+(_[а-яА-Я]+)*)*").unwrap();
         let mut nouns: Vec<String> = all_msg
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|m| re.is_match(m))
             .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
             .filter(|m| {
@@ -421,8 +420,7 @@ impl Execute for Omedeto {
         //debug!("Found {} nouns. {:#?}", nouns.len(), nouns);
 
         let mut verbs_p: Vec<String> = all_msg
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|m| re.is_match(m))
             .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
             .filter(|m| {
@@ -449,8 +447,7 @@ impl Execute for Omedeto {
         //debug!("Found {} past verbs. {:#?}", verbs_p.len(), verbs_p);
 
         let mut verbs_i: Vec<String> = all_msg
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|m| re.is_match(m))
             .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
             .filter(|m| {
