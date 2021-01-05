@@ -31,49 +31,60 @@ pub async fn handler(
                     Here {
                         data: "".to_string(),
                     }
-                    .run(api, message)
+                    .run(&api, &message)
                     .await?
                 }
-                s if s.to_string().starts_with("/sql") => {
+                s if s.to_string().starts_with("/sql") => match {
                     Sql {
                         data: s.replace("/sql ", ""),
                     }
-                    .run(api, message)
-                    .await?
-                }
+                    .run(&api, &message)
+                    .await
+                } {
+                    Ok(_) => debug!("/sql command sent to {}", message.chat.id()),
+                    Err(e) => {
+                        api.send(
+                            message
+                                .text_reply(format!("Error: {:#?}", e))
+                                .parse_mode(ParseMode::Html),
+                        )
+                        .await?;
+                        ()
+                    }
+                },
                 "/top" => {
                     Top {
                         data: "".to_string(),
                     }
-                    .run(api, message)
+                    .run(&api, &message)
                     .await?
                 }
                 "/stat" => {
                     Top {
                         data: "".to_string(),
                     }
-                    .run(api, message)
+                    .run(&api, &message)
                     .await?
                 }
                 "/markov_all" => {
                     MarkovAll {
                         data: "".to_string(),
                     }
-                    .run(api, message)
+                    .run(&api, &message)
                     .await?
                 }
                 "/markov" => {
                     Markov {
                         data: "".to_string(),
                     }
-                    .run(api, message)
+                    .run(&api, &message)
                     .await?
                 }
                 "/omedeto" => {
                     Omedeto {
                         data: "".to_string(),
                     }
-                    .run_mystem(api, message, mystem)
+                    .run_mystem(&api, &message, mystem)
                     .await?
                 }
                 _ => (),

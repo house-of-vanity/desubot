@@ -20,9 +20,11 @@ pub enum Error {
     JsonParseError(serde_error),
     PopenError(popen_error),
     MystemError(mystem_error),
-    SQLBannedCommand,
+    SQLBannedCommand(String),
     SQLInvalidCommand,
+    SQLResultTooLong(String),
 }
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "An error occurred.")
