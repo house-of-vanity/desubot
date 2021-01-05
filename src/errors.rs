@@ -33,25 +33,25 @@ impl fmt::Display for Error {
 
 impl From<sqlite_error> for Error {
     fn from(e: sqlite_error) -> Error {
-        return Error::SQLITE3Error(e);
+        Error::SQLITE3Error(e)
     }
 }
 
 impl From<tg_error> for Error {
     fn from(e: tg_error) -> Error {
-        return Error::TelegramError(e);
+        Error::TelegramError(e)
     }
 }
 
 impl From<reqwest_error> for Error {
     fn from(e: reqwest_error) -> Error {
-        return Error::ReqwestError(e);
+        Error::ReqwestError(e)
     }
 }
 
 impl From<io_error> for Error {
     fn from(e: io_error) -> Error {
-        return Error::IOError(e);
+        Error::IOError(e)
     }
 }
 

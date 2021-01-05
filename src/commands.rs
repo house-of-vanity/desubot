@@ -477,9 +477,9 @@ impl Execute for Omedeto {
                 .map(|m| {
                     let stem = mystem.stemming(m.clone()).unwrap_or_default();
                     if stem.is_empty() {
-                        ()
+
                     } else if stem[0].lex.is_empty() {
-                        ()
+
                     } else {
                         match stem[0].lex[0].grammem.part_of_speech {
                             mystem::PartOfSpeech::Verb => {
