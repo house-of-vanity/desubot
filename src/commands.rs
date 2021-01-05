@@ -1,6 +1,7 @@
+#![allow(unused_variables)]
 use crate::db;
 use crate::errors::Error;
-use crate::errors::Error::{SQLInvalidCommand, SQLITE3Error};
+use crate::errors::Error::{SQLITE3Error, SQLInvalidCommand};
 use async_trait::async_trait;
 use html_escape::encode_text;
 use markov::Chain;
@@ -39,8 +40,9 @@ pub struct Sql {
 
 #[async_trait]
 pub trait Execute {
-    async fn run(&self, api: &Api, message: &Message) -> Result<(), Error>;
-    async fn run_mystem(
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error>;
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error>;
+    async fn exec_mystem(
         &self,
         api: &Api,
         message: &Message,
@@ -50,8 +52,12 @@ pub trait Execute {
 
 #[async_trait]
 impl Execute for Sql {
-    async fn run(&self, api: &Api, message: &Message) -> Result<(), Error> {
-        let mut sql = self.data.to_uppercase();
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        let mut sql = self.data.clone();
         let is_head = if sql.starts_with('-') {
             sql = sql.replacen("-", "", 1);
             false
@@ -88,7 +94,7 @@ impl Execute for Sql {
 
         let mut rows = match stmt.query(rusqlite::NO_PARAMS) {
             Err(e) => return Err(SQLITE3Error(e)),
-            Ok(mut rows) => rows,
+            Ok(rows) => rows,
         };
 
         let mut res: Vec<Vec<String>> = match rows.column_names() {
@@ -156,11 +162,11 @@ impl Execute for Sql {
         } else {
             msg
         };
-        Ok(())
+        Ok(msg)
     }
 
     #[allow(unused_variables)]
-    async fn run_mystem(
+    async fn exec_mystem(
         &self,
         api: &Api,
         message: &Message,
@@ -172,7 +178,7 @@ impl Execute for Sql {
 
 #[async_trait]
 impl Execute for Here {
-    async fn run(&self, api: &Api, message: &Message) -> Result<(), Error> {
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
         let members: Vec<telegram_bot::User> = db::get_members(message.chat.id()).unwrap();
         for u in &members {
             debug!("Found user {:?} in chat {}", u, message.chat.id());
@@ -200,8 +206,12 @@ impl Execute for Here {
         Ok(())
     }
 
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        unimplemented!()
+    }
+
     #[allow(unused_variables)]
-    async fn run_mystem(
+    async fn exec_mystem(
         &self,
         api: &Api,
         message: &Message,
@@ -213,7 +223,7 @@ impl Execute for Here {
 
 #[async_trait]
 impl Execute for Top {
-    async fn run(&self, api: &Api, message: &Message) -> Result<(), Error> {
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
         let top = db::get_top(&message).await?;
         let mut msg = "<b>Your top using words:</b>\n<pre>".to_string();
         let mut counter = 1;
@@ -235,8 +245,12 @@ impl Execute for Top {
         Ok(())
     }
 
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        unimplemented!()
+    }
+
     #[allow(unused_variables)]
-    async fn run_mystem(
+    async fn exec_mystem(
         &self,
         api: &Api,
         message: &Message,
@@ -248,7 +262,7 @@ impl Execute for Top {
 
 #[async_trait]
 impl Execute for MarkovAll {
-    async fn run(&self, api: &Api, message: &Message) -> Result<(), Error> {
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
         let messages = db::get_messages_random_all().await?;
         let mut chain = Chain::new();
         chain.feed(messages);
@@ -269,8 +283,12 @@ impl Execute for MarkovAll {
         Ok(())
     }
 
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        unimplemented!()
+    }
+
     #[allow(unused_variables)]
-    async fn run_mystem(
+    async fn exec_mystem(
         &self,
         api: &Api,
         message: &Message,
@@ -282,7 +300,7 @@ impl Execute for MarkovAll {
 
 #[async_trait]
 impl Execute for Markov {
-    async fn run(&self, api: &Api, message: &Message) -> Result<(), Error> {
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
         let messages = db::get_messages_random_group(&message).await?;
         let mut chain = Chain::new();
         chain.feed(messages);
@@ -303,8 +321,12 @@ impl Execute for Markov {
         Ok(())
     }
 
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        unimplemented!()
+    }
+
     #[allow(unused_variables)]
-    async fn run_mystem(
+    async fn exec_mystem(
         &self,
         api: &Api,
         message: &Message,
@@ -317,12 +339,16 @@ impl Execute for Markov {
 #[async_trait]
 impl Execute for Omedeto {
     #[allow(unused_variables)]
-    async fn run(&self, api: &Api, message: &Message) -> Result<(), Error> {
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
         unimplemented!()
     }
 
     #[warn(unused_must_use)]
-    async fn run_mystem(
+    async fn exec_mystem(
         &self,
         api: &Api,
         message: &Message,

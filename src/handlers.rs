@@ -31,60 +31,68 @@ pub async fn handler(
                     Here {
                         data: "".to_string(),
                     }
-                    .run(&api, &message)
+                    .exec(&api, &message)
                     .await?
                 }
                 s if s.to_string().starts_with("/sql") => match {
                     Sql {
                         data: s.replace("/sql ", ""),
                     }
-                    .run(&api, &message)
+                    .exec_with_result(&api, &message)
                     .await
                 } {
-                    Ok(_) => debug!("/sql command sent to {}", message.chat.id()),
+                    Ok(msg) => {
+                        let _ = api
+                            .send(
+                                message
+                                    .text_reply(msg)
+                                    .parse_mode(ParseMode::Html),
+                            )
+                            .await?;
+                    },
                     Err(e) => {
-                        api.send(
-                            message
-                                .text_reply(format!("Error: {:#?}", e))
-                                .parse_mode(ParseMode::Html),
-                        )
-                        .await?;
-                        ()
+                        let _ = api
+                            .send(
+                                message
+                                    .text_reply(format!("Error: {:#?}", e))
+                                    .parse_mode(ParseMode::Html),
+                            )
+                            .await?;
                     }
                 },
                 "/top" => {
                     Top {
                         data: "".to_string(),
                     }
-                    .run(&api, &message)
+                    .exec(&api, &message)
                     .await?
                 }
                 "/stat" => {
                     Top {
                         data: "".to_string(),
                     }
-                    .run(&api, &message)
+                    .exec(&api, &message)
                     .await?
                 }
                 "/markov_all" => {
                     MarkovAll {
                         data: "".to_string(),
                     }
-                    .run(&api, &message)
+                    .exec(&api, &message)
                     .await?
                 }
                 "/markov" => {
                     Markov {
                         data: "".to_string(),
                     }
-                    .run(&api, &message)
+                    .exec(&api, &message)
                     .await?
                 }
                 "/omedeto" => {
                     Omedeto {
                         data: "".to_string(),
                     }
-                    .run_mystem(&api, &message, mystem)
+                    .exec_mystem(&api, &message, mystem)
                     .await?
                 }
                 _ => (),
