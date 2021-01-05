@@ -13,12 +13,12 @@ pub(crate) fn get_title(message: &Message) -> String {
     match &message.chat {
         MessageChat::Supergroup(chat) => chat.title.clone(),
         MessageChat::Group(chat) => chat.title.clone(),
-        MessageChat::Private(_) => format!("PRIVATE"),
+        MessageChat::Private(_) => "PRIVATE".to_string(),
         _ => "PRIVATE".to_string(),
     }
 }
 
-pub(crate) async fn create_dir(dir: &String) -> () {
+pub(crate) async fn create_dir(dir: &String)  {
     match fs_create_dir(dir) {
         Ok(_) => info!("Dir {} created.", dir),
         Err(_) => (),

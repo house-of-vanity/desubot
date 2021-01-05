@@ -54,7 +54,7 @@ pub(crate) fn get_user(id: telegram_bot::UserId) -> Result<telegram_bot::User, e
         })
     }
 
-    if users.len() == 0 {
+    if users.is_empty() {
         Err(errors::Error::UserNotFound)
     } else {
         Ok(users[0].clone())
@@ -74,7 +74,7 @@ pub(crate) fn get_conf(id: telegram_bot::ChatId) -> Result<Conf, errors::Error> 
             date: row.get(2)?,
         })
     }
-    if confs.len() == 0 {
+    if confs.is_empty() {
         Err(errors::Error::ConfNotFound)
     } else {
         Ok(confs[0].clone())

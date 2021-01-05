@@ -57,18 +57,18 @@ impl From<io_error> for Error {
 
 impl From<serde_error> for Error {
     fn from(e: serde_error) -> Error {
-        return Error::JsonParseError(e);
+        Error::JsonParseError(e)
     }
 }
 
 impl From<popen_error> for Error {
     fn from(e: popen_error) -> Error {
-        return Error::PopenError(e);
+        Error::PopenError(e)
     }
 }
 
 impl From<mystem_error> for Error {
     fn from(e: mystem_error) -> Error {
-        return Error::MystemError(e);
+        Error::MystemError(e)
     }
 }

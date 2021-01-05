@@ -13,7 +13,7 @@ use mystem::Tense::{Inpresent, Past};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
-use silicon;
+
 use sqlparser::ast::Statement;
 use sqlparser::dialect::GenericDialect;
 use sqlparser::parser::Parser;
@@ -475,7 +475,7 @@ impl Execute for Omedeto {
                 .filter(|m| re.is_match(m))
                 .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
                 .map(|m| {
-                    let stem = mystem.stemming(m.clone()).unwrap_or_default();
+                    let stem = mystem.stemming(m).unwrap_or_default();
                     if stem.is_empty() {
 
                     } else if stem[0].lex.is_empty() {
@@ -494,9 +494,9 @@ impl Execute for Omedeto {
                                             .facts
                                             .contains(&mystem::Fact::Gender(Feminine))
                                         {
-                                            fm = fm + 1;
+                                            fm += 1;
                                         } else {
-                                            mu = mu + 1;
+                                            mu += 1;
                                         }
                                     }
                                     false => (),
@@ -508,11 +508,7 @@ impl Execute for Omedeto {
                 })
                 .for_each(drop);
             //debug!("fm - {}, mu - {}", fm, mu);
-            if fm >= mu {
-                true
-            } else {
-                false
-            }
+            fm >= mu
         };
         //debug!("Is Feminine - {}", fem);
         let result = format!(
