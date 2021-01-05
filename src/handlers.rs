@@ -1,5 +1,5 @@
 //use crate::commands::Command;
-use crate::commands::{Code, Execute, Here, Markov, MarkovAll, Omedeto, Sql, Top};
+use crate::commands::{Execute, Here, Markov, MarkovAll, Omedeto, Sql, Top};
 use crate::db;
 use crate::errors;
 use crate::utils;
