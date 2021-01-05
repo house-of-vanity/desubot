@@ -13,6 +13,7 @@ use mystem::Tense::{Inpresent, Past};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
+use silicon;
 use sqlparser::ast::Statement;
 use sqlparser::dialect::GenericDialect;
 use sqlparser::parser::Parser;
@@ -35,6 +36,10 @@ pub struct Omedeto {
     pub data: String,
 }
 pub struct Sql {
+    pub data: String,
+}
+
+pub struct Code {
     pub data: String,
 }
 
@@ -539,5 +544,30 @@ impl Execute for Omedeto {
             Err(_) => warn!("/omedeto command sent failed to {}", message.chat.id()),
         }
         Ok(())
+    }
+}
+
+#[async_trait]
+impl Execute for Code {
+    async fn run(&self, api: &Api, message: &Message) -> Result<(), Error> {
+        let lang = "Rust";
+        let theme = "Dracula";
+        let code = &self.data;
+        let (ps, ts) = silicon::utils::init_syntect();
+        let syntax = ps
+            .find_syntax_by_token(lang)
+            .ok_or_else(|| ps.find_syntax_by_token("js"));
+        let theme = ts.themes.get(theme).ok_or_else(|| ts.themes.get("1337"));
+        debug!("{:?}", code);
+        Ok(())
+    }
+
+    async fn run_mystem(
+        &self,
+        api: &Api,
+        message: &Message,
+        mystem: &mut MyStem,
+    ) -> Result<(), Error> {
+        unimplemented!()
     }
 }

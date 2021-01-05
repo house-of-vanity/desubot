@@ -15,7 +15,7 @@ tracing-futures = "0.2"
 multipart = { version = "0.16", default-features = false, features = ["client"] }
 
 telegram-bot = "0.8.0"
-
+silicon = "0.4.0"
 hyper = "0.13"
 hyper-tls = { version = "0.4", optional = true  }
 futures = "0.3"

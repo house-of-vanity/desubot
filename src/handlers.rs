@@ -1,5 +1,5 @@
 //use crate::commands::Command;
-use crate::commands::{Execute, Here, Markov, MarkovAll, Omedeto, Sql, Top};
+use crate::commands::{Code, Execute, Here, Markov, MarkovAll, Omedeto, Sql, Top};
 use crate::db;
 use crate::errors;
 use crate::utils;
@@ -60,6 +60,13 @@ pub async fn handler(
                             .await?;
                     }
                 },
+                s if s.to_string().starts_with("/code") => {
+                    Code {
+                        data: s.to_string(),
+                    }
+                        .run(&api, &message)
+                        .await?
+                }
                 "/top" => {
                     Top {
                         data: "".to_string(),
