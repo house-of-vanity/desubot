@@ -367,18 +367,20 @@ impl Execute for Omedeto {
             .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
             .filter(|m| {
                 let stem = mystem.stemming(m.clone()).unwrap_or_default();
-                if stem.is_empty() {
-                    false
-                } else if stem[0].lex.is_empty() {
-                    false
-                } else {
-                    match stem[0].lex[0].grammem.part_of_speech {
-                        mystem::PartOfSpeech::Noun => stem[0].lex[0]
-                            .grammem
-                            .facts
-                            .contains(&mystem::Fact::Case(Nominative)),
-                        _ => false,
+                if !stem.is_empty() {
+                    if !stem[0].lex.is_empty() {
+                        match stem[0].lex[0].grammem.part_of_speech {
+                            mystem::PartOfSpeech::Noun => stem[0].lex[0]
+                                .grammem
+                                .facts
+                                .contains(&mystem::Fact::Case(Nominative)),
+                            _ => false,
+                        }
+                    } else {
+                        false
                     }
+                } else {
+                    false
                 }
             })
             .map(|w| w.replace(|z| z == '.' || z == ',', ""))
