@@ -64,7 +64,7 @@ pub async fn handler(
                     Code {
                         data: s.to_string(),
                     }
-                        .run(&api, &message)
+                        .exec(&api, &message)
                         .await?
                 }
                 "/top" => {

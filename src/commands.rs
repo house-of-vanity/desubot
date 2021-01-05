@@ -549,7 +549,7 @@ impl Execute for Omedeto {
 
 #[async_trait]
 impl Execute for Code {
-    async fn run(&self, api: &Api, message: &Message) -> Result<(), Error> {
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
         let lang = "Rust";
         let theme = "Dracula";
         let code = &self.data;
@@ -562,7 +562,11 @@ impl Execute for Code {
         Ok(())
     }
 
-    async fn run_mystem(
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        unimplemented!()
+    }
+
+    async fn exec_mystem(
         &self,
         api: &Api,
         message: &Message,
