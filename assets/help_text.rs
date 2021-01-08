@@ -1,7 +1,7 @@
 static CODE: &str = "<b>Code highlighter</b>
 
 <i>Usage</i>
-<pre>/CODE
+<pre>/code
 #&lt;theme - Dracula by default&gt;
 &lt;CODE&gt;
 #&lt;lang - JS by default&gt;</pre>
