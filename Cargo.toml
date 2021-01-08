@@ -1,6 +1,6 @@
 [package]
 name = "desubot"
-version = "0.1.0"
+version = "0.5.0"
 authors = ["AB <ab@hexor.ru>"]
 edition = "2018"
 
@@ -9,24 +9,21 @@ edition = "2018"
 [dependencies]
 bytes = "0.5"
 tokio = { version = "0.2", features = ["full"]}
-
 tracing = "0.1.9"
 tracing-futures = "0.2"
 multipart = { version = "0.16", default-features = false, features = ["client"] }
-
 telegram-bot = "0.8.0"
-
+silicon = "0.4.0"
 hyper = "0.13"
 hyper-tls = { version = "0.4", optional = true  }
 futures = "0.3"
 hyper-rustls = { version = "0.19", optional = true }
-
 rusqlite = { version = "0.24.2", features = ["bundled"]}
 html-escape = "0.2"
 regex = "1"
 reqwest = "0.10.9"
 uuid = { version = "0.8", features = ["v4"] }
-sha1 = "*"
+sha1 = "0.6.0"
 env_logger = "0.7"
 log = { version = "^0.4.5", features = ["std"] }
 subprocess = "0.2.6"
@@ -36,3 +33,8 @@ rand = "0.7.3"
 mystem = "0.2.1"
 async-trait = "0.1.42"
 sqlparser = "0.7.0"
+
+[dependencies.syntect]
+version = "4.4"
+default-features = false
+features = ["parsing", "dump-load", "regex-onig"]

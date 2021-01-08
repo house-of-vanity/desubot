@@ -23,52 +23,80 @@ pub enum Error {
     SQLBannedCommand(String),
     SQLInvalidCommand,
     SQLResultTooLong(String),
+    CodeHighlightningError,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "An error occurred.")
+        //         match self {
+        //             _ => write!(f, "An error occurred."),
+        //             // Error::UserNotFound => {}
+        //             // Error::SQLITE3Error(_) => {}
+        //             // Error::TelegramError(_) => {}
+        //             // Error::ReqwestError(_) => {}
+        //             // Error::ConfNotFound => {}
+        //             // Error::WordNotFound => {}
+        //             // Error::WordInStopList => {}
+        //             // Error::IOError(_) => {}
+        //             // Error::FileNotFound => {}
+        //             // Error::JsonParseError(_) => {}
+        //             // Error::PopenError(_) => {}
+        //             // Error::MystemError(_) => {}
+        //             // Error::SQLBannedCommand(_) => {}
+        //             // Error::SQLInvalidCommand => {}
+        //             // Error::SQLResultTooLong(_) => {}
+        // //             Error::CodeHighlightningError(Help) => write!(f, "Code highlighter.\
+        // // <b>Usage</b><pre>/CODE\
+        // // #&lt;theme&gt;\
+        // // &lt;CODE&gt;\
+        // // #&lt;lang&gt;</pre>\
+        // // \
+        // // List of themes:\
+        // // .")
+        //             Error::CodeHighlightningError(help) => write!(f, "{}", help.description)
+        //         }
     }
 }
 
 impl From<sqlite_error> for Error {
     fn from(e: sqlite_error) -> Error {
-        return Error::SQLITE3Error(e);
+        Error::SQLITE3Error(e)
     }
 }
 
 impl From<tg_error> for Error {
     fn from(e: tg_error) -> Error {
-        return Error::TelegramError(e);
+        Error::TelegramError(e)
     }
 }
 
 impl From<reqwest_error> for Error {
     fn from(e: reqwest_error) -> Error {
-        return Error::ReqwestError(e);
+        Error::ReqwestError(e)
     }
 }
 
 impl From<io_error> for Error {
     fn from(e: io_error) -> Error {
-        return Error::IOError(e);
+        Error::IOError(e)
     }
 }
 
 impl From<serde_error> for Error {
     fn from(e: serde_error) -> Error {
-        return Error::JsonParseError(e);
+        Error::JsonParseError(e)
     }
 }
 
 impl From<popen_error> for Error {
     fn from(e: popen_error) -> Error {
-        return Error::PopenError(e);
+        Error::PopenError(e)
     }
 }
 
 impl From<mystem_error> for Error {
     fn from(e: mystem_error) -> Error {
-        return Error::MystemError(e);
+        Error::MystemError(e)
     }
 }

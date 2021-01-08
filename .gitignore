@@ -6,3 +6,4 @@ memory.sqlite3
 /video
 /voice
 /.idea
+Cargo.lock
