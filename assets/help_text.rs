@@ -2,9 +2,8 @@ static CODE: &str = "<b>Code highlighter</b>
 
 <i>Usage</i>
 <pre>/code
-#&lt;theme - Dracula by default&gt;
 &lt;CODE&gt;
-#&lt;lang - JS by default&gt;</pre>
+#&lt;lang - JS by default&gt; #&lt;theme - Dracula by default&gt;</pre>
 
 Language may be defined by both name and extension - Rust, rs...
 Max lines - 80
