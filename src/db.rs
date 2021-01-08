@@ -348,10 +348,9 @@ pub(crate) async fn get_file(file_id: String) -> Result<i64, errors::Error> {
     file_rowid
 }
 
-async fn add_word(word: &String) -> Result<i64, errors::Error> {
-    match get_stop_word(&word).await {
-        Err(_) => return Err(errors::Error::WordInStopList),
-        _ => {}
+async fn add_word(word: &str) -> Result<i64, errors::Error> {
+    if get_stop_word(&word).await.is_err() {
+        return Err(errors::Error::WordInStopList);
     }
     let conn = open()?;
     let word_rowid =
@@ -365,7 +364,7 @@ async fn add_word(word: &String) -> Result<i64, errors::Error> {
     Ok(word_rowid)
 }
 
-async fn get_stop_word(stop_word: &String) -> Result<(), errors::Error> {
+async fn get_stop_word(stop_word: &str) -> Result<(), errors::Error> {
     let conn = open()?;
     match conn.execute_named(
         "SELECT rowid FROM stop_words WHERE word = (:stop_word)",

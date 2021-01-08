@@ -23,11 +23,39 @@ pub enum Error {
     SQLBannedCommand(String),
     SQLInvalidCommand,
     SQLResultTooLong(String),
+    CodeHighlightningError,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "An error occurred.")
+        //         match self {
+        //             _ => write!(f, "An error occurred."),
+        //             // Error::UserNotFound => {}
+        //             // Error::SQLITE3Error(_) => {}
+        //             // Error::TelegramError(_) => {}
+        //             // Error::ReqwestError(_) => {}
+        //             // Error::ConfNotFound => {}
+        //             // Error::WordNotFound => {}
+        //             // Error::WordInStopList => {}
+        //             // Error::IOError(_) => {}
+        //             // Error::FileNotFound => {}
+        //             // Error::JsonParseError(_) => {}
+        //             // Error::PopenError(_) => {}
+        //             // Error::MystemError(_) => {}
+        //             // Error::SQLBannedCommand(_) => {}
+        //             // Error::SQLInvalidCommand => {}
+        //             // Error::SQLResultTooLong(_) => {}
+        // //             Error::CodeHighlightningError(Help) => write!(f, "Code highlighter.\
+        // // <b>Usage</b><pre>/CODE\
+        // // #&lt;theme&gt;\
+        // // &lt;CODE&gt;\
+        // // #&lt;lang&gt;</pre>\
+        // // \
+        // // List of themes:\
+        // // .")
+        //             Error::CodeHighlightningError(help) => write!(f, "{}", help.description)
+        //         }
     }
 }
 

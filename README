@@ -9,7 +9,7 @@ Telegram bot with light group statistic and heavy spy features.
 * Generate sentences using Markov Chains trained on history with /markov_all.
 
 == TODO ==
-* Syntax highlighting for code exported to image.
+* Syntax highlighting for CODE exported to image.
 
 == Important ==
 * Desubot uses MyStem by Yandex for word stemming and assume that mystem binary is available in PATH.

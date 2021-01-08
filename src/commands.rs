@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 use crate::db;
 use crate::errors::Error;
-use crate::errors::Error::{SQLITE3Error, SQLInvalidCommand};
+use crate::errors::Error::{CodeHighlightningError, SQLITE3Error, SQLInvalidCommand};
 use async_trait::async_trait;
 use html_escape::encode_text;
 use markov::Chain;
@@ -13,12 +13,15 @@ use mystem::Tense::{Inpresent, Past};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
-
 use sqlparser::ast::Statement;
 use sqlparser::dialect::GenericDialect;
 use sqlparser::parser::Parser;
+use syntect::easy::HighlightLines;
+use syntect::parsing::SyntaxReference;
+use syntect::util::LinesWithEndings;
 use telegram_bot::prelude::*;
 use telegram_bot::{Api, Message, ParseMode};
+use syntect::highlighting::Theme;
 
 pub struct Here {
     pub data: String,
@@ -38,7 +41,6 @@ pub struct Omedeto {
 pub struct Sql {
     pub data: String,
 }
-
 pub struct Code {
     pub data: String,
 }
@@ -396,6 +398,7 @@ impl Execute for Omedeto {
             .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
             .filter(|m| {
                 let stem = mystem.stemming(m.clone()).unwrap_or_default();
+                #[allow(clippy::if_same_then_else)]
                 if stem.is_empty() {
                     false
                 } else if stem[0].lex.is_empty() {
@@ -423,6 +426,7 @@ impl Execute for Omedeto {
             .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
             .filter(|m| {
                 let stem = mystem.stemming(m.clone()).unwrap_or_default();
+                #[allow(clippy::if_same_then_else)]
                 if stem.is_empty() {
                     false
                 } else if stem[0].lex.is_empty() {
@@ -478,33 +482,29 @@ impl Execute for Omedeto {
                 .map(|m| m.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()[1].clone())
                 .map(|m| {
                     let stem = mystem.stemming(m).unwrap_or_default();
+                    #[allow(clippy::if_same_then_else)]
                     if stem.is_empty() {
-
                     } else if stem[0].lex.is_empty() {
-
                     } else {
-                        match stem[0].lex[0].grammem.part_of_speech {
-                            mystem::PartOfSpeech::Verb => {
-                                match stem[0].lex[0]
-                                    .grammem
-                                    .facts
-                                    .contains(&mystem::Fact::Tense(Past))
-                                {
-                                    true => {
-                                        if stem[0].lex[0]
-                                            .grammem
-                                            .facts
-                                            .contains(&mystem::Fact::Gender(Feminine))
-                                        {
-                                            fm += 1;
-                                        } else {
-                                            mu += 1;
-                                        }
+                        if let mystem::PartOfSpeech::Verb = stem[0].lex[0].grammem.part_of_speech {
+                            match stem[0].lex[0]
+                                .grammem
+                                .facts
+                                .contains(&mystem::Fact::Tense(Past))
+                            {
+                                true => {
+                                    if stem[0].lex[0]
+                                        .grammem
+                                        .facts
+                                        .contains(&mystem::Fact::Gender(Feminine))
+                                    {
+                                        fm += 1;
+                                    } else {
+                                        mu += 1;
                                     }
-                                    false => (),
                                 }
+                                false => (),
                             }
-                            _ => (),
                         }
                     }
                 })
@@ -518,17 +518,17 @@ impl Execute for Omedeto {
             start.choose(&mut rand::thread_rng()).unwrap(),
             message.from.first_name.to_string(),
             { if fem { "ая" } else { "ый" } },
-            nouns.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
-            nouns.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
-            nouns.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+            nouns.pop().unwrap_or_else(|| placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+            nouns.pop().unwrap_or_else(|| placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+            nouns.pop().unwrap_or_else(|| placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
             { if fem { "а" } else { "" } },
-            verbs_p.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
-            verbs_p.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
-            verbs_p.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+            verbs_p.pop().unwrap_or_else(|| placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+            verbs_p.pop().unwrap_or_else(|| placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+            verbs_p.pop().unwrap_or_else(|| placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
             { if fem { "а" } else { "" } },
-            verbs_i.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
-            verbs_i.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
-            verbs_i.pop().unwrap_or(placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+            verbs_i.pop().unwrap_or_else(|| placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+            verbs_i.pop().unwrap_or_else(|| placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
+            verbs_i.pop().unwrap_or_else(|| placeholders.choose(&mut rand::thread_rng()).unwrap().to_string()),
         );
         match api
             .send(
@@ -548,20 +548,80 @@ impl Execute for Omedeto {
 #[async_trait]
 impl Execute for Code {
     async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
-        let lang = "Rust";
-        let theme = "Dracula";
-        let code = &self.data;
-        let (ps, ts) = silicon::utils::init_syntect();
-        let syntax = ps
-            .find_syntax_by_token(lang)
-            .ok_or_else(|| ps.find_syntax_by_token("js"));
-        let theme = ts.themes.get(theme).ok_or_else(|| ts.themes.get("1337"));
-        debug!("{:?}", code);
-        Ok(())
-    }
-
-    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
         unimplemented!()
+    }
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        let mut lines: Vec<String> = self.data.trim().split("\n").map(|s| s.to_string()).collect();
+        if lines.len() >= 81 {
+            return Err(CodeHighlightningError);
+        }
+        let last_line = &lines[lines.len()-1];
+
+        let tags = last_line
+            .trim()
+            .split(|s| s == ' ' || s == '\n')
+            .filter(|s| s.starts_with("#"))
+            .map(|s| s.to_string().replace("#", ""))
+            .map(|s| s.to_string().replace("_", " "))
+            .collect::<Vec<_>>();
+
+        let code = if tags.is_empty() {
+            self.data.trim().to_string()
+        } else {
+            let _ = lines.pop();
+            lines.join("\n")
+        };
+        if code.is_empty() {
+            return Err(CodeHighlightningError);
+        }
+        let (ps, ts) = silicon::utils::init_syntect();
+        let syntax: Vec<&SyntaxReference> = tags
+            .iter()
+            .map(|s| ps.find_syntax_by_token(s))
+            .filter(|s| s.is_some())
+            .map(|s| s.unwrap())
+            .collect();
+        let syntax = if syntax.len() != 1 {
+            ps.find_syntax_by_token("js").unwrap()
+        } else {
+            syntax[0]
+        };
+        let theme: Vec<&Theme> = tags
+            .iter()
+            .map(|s| ts.themes.get(s))
+            .filter(|s| s.is_some())
+            .map(|s| s.unwrap())
+            .collect();
+
+
+        let theme = if theme.len() != 1 {
+            ts.themes.get("Dracula").unwrap()
+        } else {
+            theme[0]
+        };
+
+        let mut h = HighlightLines::new(syntax, theme);
+        let highlight = LinesWithEndings::from(&code)
+            .map(|line| h.highlight(line, &ps))
+            .collect::<Vec<_>>();
+        let formatter = silicon::formatter::ImageFormatterBuilder::<String>::new()
+            .window_controls(false)
+            .round_corner(false);
+        let mut formatter = formatter.build().unwrap();
+        let image = formatter.format(&highlight, &theme);
+        let path = "code.png";
+        image
+            .save(&path)
+            .map_err(|e| error!("Failed to save image to {}: {}", path, e))
+            .unwrap();
+
+        // let file = InputFileUpload::with_path("CODE.png");
+        // api.send(message.chat.document(&file)).await?;
+        //
+        // // Send an image from disk
+        // api.send( message.chat.photo(&file)).await?;
+        //debug!("{:#?}", formatter);
+        Ok(path.into())
     }
 
     async fn exec_mystem(

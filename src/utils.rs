@@ -18,10 +18,9 @@ pub(crate) fn get_title(message: &Message) -> String {
     }
 }
 
-pub(crate) async fn create_dir(dir: &String)  {
-    match fs_create_dir(dir) {
-        Ok(_) => info!("Dir {} created.", dir),
-        Err(_) => (),
+pub(crate) async fn create_dir(dir: &str) {
+    if fs_create_dir(dir).is_ok() {
+        info!("Dir {} created.", dir)
     }
 }
 
