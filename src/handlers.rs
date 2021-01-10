@@ -4,10 +4,7 @@ use crate::db;
 use crate::errors;
 use crate::utils;
 use mystem::MyStem;
-use std::time::Duration;
 use telegram_bot::*;
-use tokio::sync::oneshot;
-use tokio::time::timeout;
 
 include!("../assets/help_text.rs");
 
