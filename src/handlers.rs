@@ -4,8 +4,10 @@ use crate::db;
 use crate::errors;
 use crate::utils;
 use mystem::MyStem;
+use std::time::Duration;
 use telegram_bot::*;
-
+use tokio::sync::oneshot;
+use tokio::time::timeout;
 
 include!("../assets/help_text.rs");
 
@@ -25,19 +27,18 @@ pub async fn handler(
                 title,
                 &message.from.id,
                 &message.from.first_name,
-                {if data.len() <= 200 {data} else {&data[..200]}}.replace("\n", " ")
+                data.replace("\n", " ")
             );
 
             let cleaned_message = data.replace(&format!("@{}", me.clone().username.unwrap()), "");
             match cleaned_message.as_str() {
                 s if s.to_string().starts_with("/code") => {
-
                     match {
                         Code {
                             data: s.replace("/code", ""),
                         }
-                            .exec_with_result(&api, &message)
-                            .await
+                        .exec_with_result(&api, &message)
+                        .await
                     } {
                         Ok(path) => {
                             let file = InputFileUpload::with_path(path.clone());
@@ -120,7 +121,9 @@ pub async fn handler(
                     .exec_mystem(&api, &message, mystem)
                     .await?
                 }
-                _ => db::add_sentence(&message, mystem).await?,
+                _ => {
+                    db::add_sentence(&message, mystem).await?
+                }
             }
         }
         MessageKind::Photo { ref caption, .. } => {

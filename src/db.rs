@@ -3,6 +3,8 @@ use crate::utils;
 use rusqlite::{named_params, params, Connection, Error, Result};
 use std::time::SystemTime;
 use telegram_bot::*;
+use std::time::Duration;
+use std::thread;
 
 #[derive(Debug, Clone)]
 pub struct Conf {

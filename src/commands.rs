@@ -17,11 +17,11 @@ use sqlparser::ast::Statement;
 use sqlparser::dialect::GenericDialect;
 use sqlparser::parser::Parser;
 use syntect::easy::HighlightLines;
+use syntect::highlighting::Theme;
 use syntect::parsing::SyntaxReference;
 use syntect::util::LinesWithEndings;
 use telegram_bot::prelude::*;
 use telegram_bot::{Api, Message, ParseMode};
-use syntect::highlighting::Theme;
 
 pub struct Here {
     pub data: String,
@@ -551,11 +551,16 @@ impl Execute for Code {
         unimplemented!()
     }
     async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
-        let mut lines: Vec<String> = self.data.trim().split("\n").map(|s| s.to_string()).collect();
+        let mut lines: Vec<String> = self
+            .data
+            .trim()
+            .split("\n")
+            .map(|s| s.to_string())
+            .collect();
         if lines.len() >= 81 {
             return Err(CodeHighlightningError);
         }
-        let last_line = &lines[lines.len()-1];
+        let last_line = &lines[lines.len() - 1];
 
         let tags = last_line
             .trim()
@@ -593,7 +598,6 @@ impl Execute for Code {
             .map(|s| s.unwrap())
             .collect();
 
-
         let theme = if theme.len() != 1 {
             ts.themes.get("Dracula").unwrap()
         } else {
@@ -606,6 +610,7 @@ impl Execute for Code {
             .collect::<Vec<_>>();
         let formatter = silicon::formatter::ImageFormatterBuilder::<String>::new()
             .window_controls(false)
+            .line_offset(1)
             .round_corner(false);
         let mut formatter = formatter.build().unwrap();
         let image = formatter.format(&highlight, &theme);
