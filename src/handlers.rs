@@ -48,7 +48,7 @@ pub async fn handler(
                         }
                         Err(_) => {
                             let _ = api
-                                .send(message.text_reply(CODE).parse_mode(ParseMode::Html))
+                                .send(message.text_reply(CODE_HELP).parse_mode(ParseMode::Html))
                                 .await?;
                         }
                     }

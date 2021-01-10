@@ -1,10 +1,10 @@
-static CODE: &str = "<b>Code highlighter</b>
+#[allow(dead_code)]
+static CODE_HELP: &str = "<b>Code highlighter</b>
 
 <i>Usage</i>
 <pre>/CODE
-#&lt;theme - Dracula by default&gt;
 &lt;CODE&gt;
-#&lt;lang - JS by default&gt;</pre>
+#&lt;lang - JS by default&gt; #&lt;theme - Dracula by default&gt;</pre>
 
 Language may be defined by both name and extension - Rust, rs...
 Max lines - 80
@@ -34,3 +34,10 @@ gruvbox-light
 gruvbox-white
 zenburn
 ";
+
+#[allow(dead_code)]
+pub static SQL_HELP: &str = "<b>Perform an SQL command</b>
+<i>* Only one sentence per message.
+* Only SELECT command.
+* Max result length is 100 lines. Use LIMIT 100.
+* SQLITE syntax is available only.</i>";

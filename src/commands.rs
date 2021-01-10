@@ -23,6 +23,8 @@ use syntect::util::LinesWithEndings;
 use telegram_bot::prelude::*;
 use telegram_bot::{Api, Message, ParseMode};
 
+include!("../assets/help_text.rs");
+
 pub struct Here {
     pub data: String,
 }
@@ -65,6 +67,10 @@ impl Execute for Sql {
 
     async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
         let mut sql = self.data.clone();
+        debug!("PIZDA - {}", sql);
+        if sql == "/sql" || sql == "/sql-" {
+            return Ok(SQL_HELP.to_string())
+        }
         let is_head = if sql.starts_with('-') {
             sql = sql.replacen("-", "", 1);
             false
