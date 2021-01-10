@@ -6,7 +6,6 @@ use crate::utils;
 use mystem::MyStem;
 use telegram_bot::*;
 
-
 include!("../assets/help_text.rs");
 
 pub async fn handler(
@@ -25,19 +24,18 @@ pub async fn handler(
                 title,
                 &message.from.id,
                 &message.from.first_name,
-                {if data.len() <= 200 {data} else {&data[..200]}}.replace("\n", " ")
+                data.replace("\n", " ")
             );
 
             let cleaned_message = data.replace(&format!("@{}", me.clone().username.unwrap()), "");
             match cleaned_message.as_str() {
                 s if s.to_string().starts_with("/code") => {
-
                     match {
                         Code {
                             data: s.replace("/code", ""),
                         }
-                            .exec_with_result(&api, &message)
-                            .await
+                        .exec_with_result(&api, &message)
+                        .await
                     } {
                         Ok(path) => {
                             let file = InputFileUpload::with_path(path.clone());
@@ -50,7 +48,7 @@ pub async fn handler(
                         }
                         Err(_) => {
                             let _ = api
-                                .send(message.text_reply(CODE).parse_mode(ParseMode::Html))
+                                .send(message.text_reply(CODE_HELP).parse_mode(ParseMode::Html))
                                 .await?;
                         }
                     }
@@ -120,7 +118,9 @@ pub async fn handler(
                     .exec_mystem(&api, &message, mystem)
                     .await?
                 }
-                _ => db::add_sentence(&message, mystem).await?,
+                _ => {
+                    db::add_sentence(&message, mystem).await?
+                }
             }
         }
         MessageKind::Photo { ref caption, .. } => {

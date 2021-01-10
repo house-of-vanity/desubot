@@ -1,6 +1,6 @@
 [package]
 name = "desubot"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["AB <ab@hexor.ru>"]
 edition = "2018"
 
@@ -30,7 +30,8 @@ subprocess = "0.2.6"
 serde_json = "1.0"
 markov = "1.1.0"
 rand = "0.7.3"
-mystem = "0.2.1"
+mystem = "^0.2"
+#mystem = { path = "../mystem-rs" }
 async-trait = "0.1.42"
 sqlparser = "0.7.0"
 
