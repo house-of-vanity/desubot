@@ -7,8 +7,6 @@ Telegram bot with light group statistic and heavy spy features.
 * /here command to mention all members.
 * Alongside with saving whole message bot perform blacklist filter and stemming for every word (only Russian). "Красивую собаку мыли негры" -> "красивый собака мыть негр"
 * Generate sentences using Markov Chains trained on history with /markov_all.
-
-== TODO ==
 * Syntax highlighting for CODE exported to image.
 
 == Important ==
