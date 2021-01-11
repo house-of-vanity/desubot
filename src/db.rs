@@ -214,7 +214,7 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
 
     match get_conf(message.chat.id()) {
         Ok(_) => {
-            //info!("Group found: {:?}", message.chat.id());
+            debug!("Group found: {:?}", message.chat.id());
             let update = Conf {
                 id: message.chat.id(),
                 title,
@@ -228,10 +228,10 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
                 id = :id",
             )?;
             stmt.execute_named(&[(":id", &update.id.to_string()), (":title", &update.title)])?;
-            //info!("Conf {:?} updated: {:?}", update.title, get_conf(update.id));
+            debug!("Conf {:?} updated: {:?}", update.title, get_conf(update.id));
         }
         Err(_) => {
-            //info!("Group didn't found: {:?}", message.chat.id());
+            debug!("Group didn't found: {:?}", message.chat.id());
 
             let update = Conf {
                 id: message.chat.id(),
@@ -250,7 +250,7 @@ pub(crate) async fn add_conf(message: Message) -> Result<(), Error> {
                 (":title", &update.title),
                 (":date", &unix_time),
             ])?;
-            //info!("Conf {:?} added: {:?}", update.title, get_conf(update.id));
+            debug!("Conf {:?} added: {:?}", update.title, get_conf(update.id));
         }
     }
     Ok(())
@@ -283,7 +283,7 @@ pub(crate) async fn add_user(message: Message) -> Result<(), Error> {
                 (":first_name", &update.first_name),
                 (":last_name", &update.last_name),
             ])?;
-            //println!("User {} updated: {:?}", update.first_name, get_user(user.id));
+            debug!("User {} updated: {:?}", update.first_name, get_user(update.id));
         }
         Err(_) => {
             let unix_time = SystemTime::now()
@@ -310,7 +310,7 @@ pub(crate) async fn add_user(message: Message) -> Result<(), Error> {
                 (":last_name", &user.last_name),
                 (":date", &unix_time),
             ])?;
-            //println!("User added: {:?}", user);
+            debug!("User added: {:?}", user);
         }
     }
     Ok(())
