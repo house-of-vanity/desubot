@@ -143,7 +143,7 @@ impl Execute for Sql {
             }
             res.push(tmp);
         }
-        if res.len() > 100 {
+        if res.len() >= 100 {
             return Err(Error::SQLResultTooLong(
                 "SQL result too long. Lines limit is 100. Use LIMIT".to_string(),
             ));
