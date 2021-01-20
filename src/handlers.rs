@@ -53,7 +53,7 @@ pub async fn handler(
                         }
                     }
                 }
-                s if s.contains("/here") => {
+                s if s.contains("/here") || s.contains("@here") => {
                     db::add_sentence(&message, mystem).await?;
                     Here {
                         data: "".to_string(),
