@@ -192,7 +192,7 @@ impl Execute for Sql {
 #[async_trait]
 impl Execute for Here {
     async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
-        let members: Vec<telegram_bot::User> = db::get_members(message.chat.id()).unwrap();
+        let members: Vec<telegram_bot::User> = db::get_members(message.chat.id(), 60).unwrap();
         for u in &members {
             debug!("Found user {:?} in chat {}", u, message.chat.id());
         }

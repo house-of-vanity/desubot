@@ -180,17 +180,27 @@ pub(crate) async fn get_messages_user_all(
     Ok(messages)
 }
 
-pub(crate) fn get_members(id: telegram_bot::ChatId) -> Result<Vec<telegram_bot::User>> {
+pub(crate) fn get_members(id: telegram_bot::ChatId, limit: u32) -> Result<Vec<telegram_bot::User>> {
+    let where_statement = if limit > 0 {
+        format!("and days_seen <= {}", limit)
+    } else {
+        "".into()
+    };
+    debug!("{}", where_statement);
     let conn = open()?;
     let mut stmt = conn.prepare_cached(
-        "
-        SELECT DISTINCT(u.username), u.id, u.first_name, u.last_name, u.date
+        &format!("
+        SELECT DISTINCT(u.username), u.id, u.first_name, u.last_name, u.date,
+        (strftime('%s','now')-r.date)/60/60/24 as days_seen
         FROM relations r
         JOIN user u
         ON u.id = r.user_id
         LEFT JOIN conf c
         ON r.conf_id = c.id
-        WHERE c.id = :id",
+        WHERE c.id = :id
+        {}
+        GROUP BY u.id
+        ORDER BY r.date DESC", where_statement),
     )?;
     let mut rows = stmt.query_named(&[(":id", &id.to_string())])?;
     let mut users = Vec::new();
