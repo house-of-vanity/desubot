@@ -118,9 +118,7 @@ pub async fn handler(
                     .exec_mystem(&api, &message, mystem)
                     .await?
                 }
-                _ => {
-                    db::add_sentence(&message, mystem).await?
-                }
+                _ => db::add_sentence(&message, mystem).await?,
             }
         }
         MessageKind::Photo { ref caption, .. } => {

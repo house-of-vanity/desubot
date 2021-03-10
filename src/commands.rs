@@ -21,7 +21,7 @@ use syntect::highlighting::Theme;
 use syntect::parsing::SyntaxReference;
 use syntect::util::LinesWithEndings;
 use telegram_bot::prelude::*;
-use telegram_bot::{Api, Message, ParseMode};
+use telegram_bot::{Api, Message, ParseMode, UserId};
 
 include!("../assets/help_text.rs");
 
@@ -69,7 +69,7 @@ impl Execute for Sql {
         let mut sql = self.data.clone();
         debug!("PIZDA - {}", sql);
         if sql == "/sql" || sql == "/sql-" {
-            return Ok(SQL_HELP.to_string())
+            return Ok(SQL_HELP.to_string());
         }
         let is_head = if sql.starts_with('-') {
             sql = sql.replacen("-", "", 1);
@@ -192,7 +192,15 @@ impl Execute for Sql {
 #[async_trait]
 impl Execute for Here {
     async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
-        let members: Vec<telegram_bot::User> = db::get_members(message.chat.id(), 60).unwrap();
+        let members: Vec<telegram_bot::User> =
+            db::get_members(message.chat.id(), 60).unwrap_or(vec![telegram_bot::User {
+                id: UserId::new(124317807),
+                first_name: "Ultradesu".to_string(),
+                last_name: None,
+                username: None,
+                is_bot: false,
+                language_code: None,
+            }]);
         for u in &members {
             debug!("Found user {:?} in chat {}", u, message.chat.id());
         }

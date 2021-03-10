@@ -188,8 +188,8 @@ pub(crate) fn get_members(id: telegram_bot::ChatId, limit: u32) -> Result<Vec<te
     };
     debug!("{}", where_statement);
     let conn = open()?;
-    let mut stmt = conn.prepare_cached(
-        &format!("
+    let mut stmt = conn.prepare_cached(&format!(
+        "
         SELECT DISTINCT(u.username), u.id, u.first_name, u.last_name, u.date,
         (strftime('%s','now')-r.date)/60/60/24 as days_seen
         FROM relations r
@@ -200,8 +200,9 @@ pub(crate) fn get_members(id: telegram_bot::ChatId, limit: u32) -> Result<Vec<te
         WHERE c.id = :id
         {}
         GROUP BY u.id
-        ORDER BY r.date DESC", where_statement),
-    )?;
+        ORDER BY r.date DESC",
+        where_statement
+    ))?;
     let mut rows = stmt.query_named(&[(":id", &id.to_string())])?;
     let mut users = Vec::new();
 
@@ -293,7 +294,11 @@ pub(crate) async fn add_user(message: Message) -> Result<(), Error> {
                 (":first_name", &update.first_name),
                 (":last_name", &update.last_name),
             ])?;
-            debug!("User {} updated: {:?}", update.first_name, get_user(update.id));
+            debug!(
+                "User {} updated: {:?}",
+                update.first_name,
+                get_user(update.id)
+            );
         }
         Err(_) => {
             let unix_time = SystemTime::now()
