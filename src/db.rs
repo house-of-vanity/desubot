@@ -432,6 +432,7 @@ pub(crate) async fn add_sentence(
         };
 
     // Save stemmed words
+    debug!("Going to stem: {}", text);
     let words = mystem.stemming(text)?;
     conn.execute("BEGIN TRANSACTION", params![]);
     for word in words {
