@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhouse-of-vanity%2Fdesubot.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhouse-of-vanity%2Fdesubot?ref=badge_shield)
+
 Desubot
 Telegram bot with light group statistic and heavy spy features.
 
@@ -12,3 +14,7 @@ Telegram bot with light group statistic and heavy spy features.
 == Important ==
 * Desubot uses MyStem by Yandex for word stemming and assume that mystem binary is available in PATH.
 On Windows it may be placed on working directory. Both Linux and Windows mystem binary is in repo.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhouse-of-vanity%2Fdesubot.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhouse-of-vanity%2Fdesubot?ref=badge_large)
