@@ -53,7 +53,12 @@ pub async fn handler(
                         }
                     }
                 }
-                s if s.contains("/here") || s.contains("@here") || s.contains("/хере") || s.contains("@хере") || s.contains("\"хере") => {
+                s if s.contains("/here")
+                    || s.contains("@here")
+                    || s.contains("/хере")
+                    || s.contains("@хере")
+                    || s.contains("\"хере") =>
+                {
                     db::add_sentence(&message, mystem).await?;
                     Here {
                         data: "".to_string(),
