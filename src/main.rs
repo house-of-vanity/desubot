@@ -1,5 +1,6 @@
 #![allow(unreachable_code)]
 use std::{env, process};
+use tokio::time::{delay_for, Duration};
 
 use futures::StreamExt;
 use telegram_bot::*;
@@ -47,18 +48,31 @@ async fn main() -> Result<(), errors::Error> {
     );
     loop {
         while let Some(update) = stream.next().await {
-            let update = update?;
-            if let UpdateKind::Message(message) = update.kind {
-                db::add_conf(message.clone()).await?;
-                db::add_user(message.clone()).await?;
-                match handlers::handler(api.clone(), message, token.clone(), &mut mystem, me.clone())
-                    .await
-                {
-                    Ok(_) => {}
-                    Err(e) => warn!("An error occurred handling command. {:?}", e),
+            match update {
+                Ok(u) => {
+                    if let UpdateKind::Message(message) = u.kind {
+                        db::add_conf(message.clone()).await?;
+                        db::add_user(message.clone()).await?;
+                        match handlers::handler(
+                            api.clone(),
+                            message,
+                            token.clone(),
+                            &mut mystem,
+                            me.clone(),
+                        )
+                        .await
+                        {
+                            Ok(_) => {}
+                            Err(e) => warn!("An error occurred handling command. {:?}", e),
+                        }
+                    }
                 }
-            }
+                Err(e) => {
+                    warn!("Telegram API Error: {:?}", e);
+                }
+            };
         }
+        delay_for(Duration::from_secs(2)).await;
     }
     Ok(())
 }
