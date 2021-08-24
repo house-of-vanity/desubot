@@ -34,12 +34,12 @@ jobs:
   build-push-docker:
     runs-on: ubuntu-latest
     steps:
-#     - name: Get the version (git tag)
-#       id: get_version_for_docker
-#       run: |
-#         echo ${GITHUB_REF/refs\/tags\/v/}
-#         echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\/v/}
-#         echo ::set-output name=FULL_TAG::${GITHUB_REF/refs\/tags\//}
+      - name: Branch name
+        id: branch_name
+        run: |
+          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -59,13 +59,13 @@ jobs:
         with:
           push: true
           tags: ultradesu/desubot:latest
-#     -
-#       name: Build and push
-#       id: docker_build_tag
-#       uses: docker/build-push-action@v2
-#       with:
-#         push: true
-#         tags: ultradesu/desubot:${{ steps.get_version.outputs.FULL_TAG }}
+      -
+        name: Build and push
+        id: docker_build_tag
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ultradesu/desubot:${{ steps.branch_name.outputs.SOURCE_TAG }}
 
   publish:
     name: Publish release
