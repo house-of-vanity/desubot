@@ -8,3 +8,4 @@ memory.sqlite3
 /.idea
 Cargo.lock
 k8s/k8s-deploy.yaml
+/identifier.sqlite
