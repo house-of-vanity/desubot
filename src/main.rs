@@ -28,6 +28,10 @@ async fn main() -> Result<(), errors::Error> {
         Ok(_) => {}
         Err(e) => panic!("Database error: {:?}", e),
     }
+    match db::load_stopwords() {
+        Ok(_) => {}
+        Err(e) => panic!("Database error: {:?}", e),
+    }
     let token = match env::var("TELEGRAM_BOT_TOKEN") {
         Ok(token) => token,
         Err(_) => {

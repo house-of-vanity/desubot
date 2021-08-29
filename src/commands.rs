@@ -328,7 +328,7 @@ impl Execute for Markov {
         let mut sentences = chain.generate();
         let mut msg = String::new();
         for _ in 1..rand::thread_rng().gen_range(2, 10) {
-            msg = format!("{} {}", msg, sentences.pop().unwrap());
+            msg = format!("{} {}", msg, sentences.pop().unwrap_or(" ".into()));
         }
         match api
             .send(message.text_reply(msg.trim()).parse_mode(ParseMode::Html))

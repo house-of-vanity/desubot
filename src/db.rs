@@ -34,6 +34,25 @@ pub(crate) fn update_scheme() -> Result<()> {
     Ok(())
 }
 
+pub(crate) fn load_stopwords() -> Result<()> {
+    let conn = open()?;
+    for table in include_str!("../assets/stop-words.txt").split('\n').into_iter() {
+        let word = table.trim();
+        if word != "" {
+            let mut stmt = conn.prepare_cached(
+                "
+                    INSERT OR IGNORE INTO
+                                    stop_words('word')
+                                    VALUES (:word)
+                    ",
+            )?.insert(params![word]);
+            //let mut rows = stmt.word(named_params! {":conf_id": conf_id})?;
+        }
+    }
+    info!("Stop words updated.");
+    Ok(())
+}
+
 pub(crate) fn get_user(id: telegram_bot::UserId) -> Result<telegram_bot::User, errors::Error> {
     let conn = open()?;
     let mut stmt = conn.prepare_cached(
@@ -447,7 +466,7 @@ pub(crate) async fn add_sentence(
                     Err(e) => panic!("SQLITE3 Error: Relations failed: {:?}", e),
                 }
             }
-            Err(_) => debug!("Word {} is in stop list.", &word.lex[0].lex),
+            Err(_) => debug!("Word {} is in a stop list.", &word.lex[0].lex),
         }
     }
     conn.execute("END TRANSACTION", params![]);
