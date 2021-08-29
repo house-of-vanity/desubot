@@ -1,4 +1,6 @@
+#![allow(unreachable_code)]
 use std::{env, process};
+use tokio::time::{delay_for, Duration};
 
 use futures::StreamExt;
 use telegram_bot::*;
@@ -16,7 +18,7 @@ use mystem::MyStem;
 
 #[tokio::main]
 async fn main() -> Result<(), errors::Error> {
-    env_logger::from_env(Env::default().default_filter_or("info")).init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     let mut mystem = match MyStem::new() {
         Ok(mystem) => mystem,
         Err(e) => {
@@ -48,18 +50,33 @@ async fn main() -> Result<(), errors::Error> {
         me.first_name,
         me.id
     );
-    while let Some(update) = stream.next().await {
-        let update = update?;
-        if let UpdateKind::Message(message) = update.kind {
-            db::add_conf(message.clone()).await?;
-            db::add_user(message.clone()).await?;
-            match handlers::handler(api.clone(), message, token.clone(), &mut mystem, me.clone())
-                .await
-            {
-                Ok(_) => {}
-                Err(e) => warn!("An error occurred handling command. {:?}", e),
-            }
+    loop {
+        while let Some(update) = stream.next().await {
+            match update {
+                Ok(u) => {
+                    if let UpdateKind::Message(message) = u.kind {
+                        db::add_conf(message.clone()).await?;
+                        db::add_user(message.clone()).await?;
+                        match handlers::handler(
+                            api.clone(),
+                            message,
+                            token.clone(),
+                            &mut mystem,
+                            me.clone(),
+                        )
+                        .await
+                        {
+                            Ok(_) => {}
+                            Err(e) => warn!("An error occurred handling command. {:?}", e),
+                        }
+                    }
+                }
+                Err(e) => {
+                    warn!("Telegram API Error: {:?}", e);
+                }
+            };
         }
+        delay_for(Duration::from_secs(2)).await;
     }
     Ok(())
 }

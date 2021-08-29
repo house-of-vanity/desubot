@@ -1,6 +1,6 @@
 [package]
 name = "desubot"
-version = "0.5.5"
+version = "0.5.7"
 authors = ["AB <ab@hexor.ru>"]
 edition = "2018"
 
@@ -12,7 +12,8 @@ tokio = { version = "0.2", features = ["full"]}
 tracing = "0.1.9"
 tracing-futures = "0.2"
 multipart = { version = "0.16", default-features = false, features = ["client"] }
-telegram-bot = "0.8.0"
+#telegram-bot = "0.8.0"
+telegram-bot = { git = "https://github.com/ayrat555/telegram-bot", branch = "ayrat555/api-fixes-10" }
 silicon = "0.4.0"
 hyper = "0.13"
 hyper-tls = { version = "0.4", optional = true  }

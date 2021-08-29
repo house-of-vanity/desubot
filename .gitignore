@@ -7,3 +7,4 @@ memory.sqlite3
 /voice
 /.idea
 Cargo.lock
+k8s/k8s-deploy.yaml
