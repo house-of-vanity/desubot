@@ -13,7 +13,7 @@ Telegram bot with light group statistic and heavy spy features.
 
 == Important ==
 * Desubot uses MyStem by Yandex for word stemming and assume that mystem binary is available in PATH.
-On Windows it may be placed on working directory. Both Linux and Windows mystem binary is in repo.
+* ubuntu deps: libssl-dev libsqlite3-dev cmake libfreetype-dev
 
 
 ## License
