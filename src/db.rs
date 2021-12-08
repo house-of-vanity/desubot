@@ -35,6 +35,7 @@ pub(crate) fn update_scheme() -> Result<()> {
 }
 
 pub(crate) fn load_stopwords() -> Result<()> {
+    info!("Populating stop words wait please.");
     let conn = open()?;
     for table in include_str!("../assets/stop-words.txt").split('\n').into_iter() {
         let word = table.trim();
