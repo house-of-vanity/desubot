@@ -1,3 +1,5 @@
+#[allow(unused_mut)]
+#[allow(dead_code)]
 use crate::errors;
 use crate::utils;
 use rusqlite::{named_params, params, Connection, Error, Result};
@@ -37,17 +39,21 @@ pub(crate) fn update_scheme() -> Result<()> {
 pub(crate) fn load_stopwords() -> Result<()> {
     info!("Populating stop words wait please.");
     let conn = open()?;
-    for table in include_str!("../assets/stop-words.txt").split('\n').into_iter() {
+    for table in include_str!("../assets/stop-words.txt")
+        .split('\n')
+        .into_iter()
+    {
         let word = table.trim();
         if word != "" {
-            let mut stmt = conn.prepare_cached(
-                "
+            let mut _stmt = conn
+                .prepare_cached(
+                    "
                     INSERT OR IGNORE INTO
                                     stop_words('word')
                                     VALUES (:word)
                     ",
-            )?.insert(params![word]);
-            //let mut rows = stmt.word(named_params! {":conf_id": conf_id})?;
+                )?
+                .insert(params![word]);
         }
     }
     info!("Stop words updated.");

@@ -1,5 +1,5 @@
 #[allow(dead_code)]
-static CODE_HELP: &str = "<b>Code highlighter</b>
+pub(crate) static CODE_HELP: &str = "<b>Code highlighter</b>
 
 <i>Usage</i>
 <pre>/code
@@ -7,7 +7,7 @@ static CODE_HELP: &str = "<b>Code highlighter</b>
 #&lt;lang - JS by default&gt; #&lt;theme - Dracula by default&gt;</pre>
 
 Language may be defined by both name and extension - Rust, rs...
-Max lines - 80
+Max length - 4000
 
 List of themes:
 1337

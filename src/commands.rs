@@ -21,6 +21,7 @@ use syntect::highlighting::Theme;
 use syntect::parsing::SyntaxReference;
 use syntect::util::LinesWithEndings;
 use telegram_bot::prelude::*;
+use telegram_bot::*;
 use telegram_bot::{Api, Message, ParseMode, UserId};
 
 include!("../assets/help_text.rs");
@@ -46,6 +47,9 @@ pub struct Sql {
 pub struct Code {
     pub data: String,
 }
+pub struct Scheme {
+    pub data: String,
+}
 
 #[async_trait]
 pub trait Execute {
@@ -57,6 +61,68 @@ pub trait Execute {
         message: &Message,
         mystem: &mut MyStem,
     ) -> Result<(), Error>;
+}
+
+#[async_trait]
+impl Execute for Scheme {
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
+        match api
+            .send(
+                message
+                    .text_reply(format!(
+                        "{}{}{}",
+                        "<pre>",
+                        include_str!("../assets/scheme.sql").to_string(),
+                        "</pre>"
+                    ))
+                    .parse_mode(ParseMode::Html),
+            )
+            .await
+        {
+            Ok(_) => debug!("/scheme command sent to {}", message.chat.id()),
+            Err(_) => warn!("/scheme command sent failed to {}", message.chat.id()),
+        };
+        match {
+            Code {
+                data: format!(
+                    "{}{}",
+                    include_str!("../assets/scheme.sql").to_string(),
+                    "\n#sql"
+                ),
+            }
+            .exec_with_result(&api, &message)
+            .await
+        } {
+            Ok(path) => {
+                let file = InputFileUpload::with_path(path.clone());
+                // api.send(message.chat.document(&file)).await?;
+                //
+                // // Send an image from disk
+                api.send(message.chat.document(&file)).await?;
+                //debug!("{:#?}", formatter);
+                let _ = std::fs::remove_file(&path);
+            }
+            Err(_) => {
+                let _ = api
+                    .send(message.text_reply(CODE_HELP).parse_mode(ParseMode::Html))
+                    .await?;
+            }
+        }
+        Ok(())
+    }
+
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        unimplemented!()
+    }
+
+    async fn exec_mystem(
+        &self,
+        api: &Api,
+        message: &Message,
+        mystem: &mut MyStem,
+    ) -> Result<(), Error> {
+        unimplemented!()
+    }
 }
 
 #[async_trait]
@@ -571,9 +637,6 @@ impl Execute for Code {
             .split("\n")
             .map(|s| s.to_string())
             .collect();
-        if lines.len() >= 81 {
-            return Err(CodeHighlightningError);
-        }
         let last_line = &lines[lines.len() - 1];
 
         let tags = last_line

@@ -1,5 +1,5 @@
 //use crate::commands::Command;
-use crate::commands::{Code, Execute, Here, Markov, MarkovAll, Omedeto, Sql, Top};
+use crate::commands::{Code, Execute, Here, Markov, MarkovAll, Omedeto, Scheme, Sql, Top};
 use crate::db;
 use crate::errors;
 use crate::utils;
@@ -38,11 +38,30 @@ pub async fn handler(
                         .await
                     } {
                         Ok(path) => {
+                            let mut cnt_lines = 0;
+                            for _ in s.lines() {
+                                cnt_lines = cnt_lines + 1;
+                            }
+                            let mut cnt_chars = 0;
+                            for _ in s.chars() {
+                                cnt_chars = cnt_chars + 1;
+                            }
                             let file = InputFileUpload::with_path(path.clone());
+                            info!("lines: {}, chars: {}", cnt_lines, cnt_chars);
                             // api.send(message.chat.document(&file)).await?;
                             //
                             // // Send an image from disk
-                            api.send(message.chat.photo(&file)).await?;
+                            if cnt_chars > 4000 {
+                                let _ = api
+                                    .send(message.text_reply(CODE_HELP).parse_mode(ParseMode::Html))
+                                    .await?;
+                                return Ok(());
+                            }
+                            if cnt_lines < 81 {
+                                api.send(message.chat.photo(&file)).await?;
+                            } else {
+                                api.send(message.chat.document(&file)).await?;
+                            }
                             //debug!("{:#?}", formatter);
                             let _ = std::fs::remove_file(&path);
                         }
@@ -111,6 +130,13 @@ pub async fn handler(
                 }
                 "/markov" => {
                     Markov {
+                        data: "".to_string(),
+                    }
+                    .exec(&api, &message)
+                    .await?
+                }
+                s if s =="/scheme" || s == "/schema" => {
+                    Scheme {
                         data: "".to_string(),
                     }
                     .exec(&api, &message)
