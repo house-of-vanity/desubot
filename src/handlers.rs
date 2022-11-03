@@ -76,6 +76,7 @@ pub async fn handler(
                     || s.contains("@here")
                     || s.contains("/хере")
                     || s.contains("@хере")
+                    || s.contains("@all")
                     || s.contains("\"хере") =>
                 {
                     db::add_sentence(&message, mystem).await?;
