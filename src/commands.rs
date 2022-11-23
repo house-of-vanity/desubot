@@ -32,6 +32,12 @@ pub struct Here {
 pub struct Top {
     pub data: String,
 }
+pub struct ConfTop {
+    pub data: String,
+}
+pub struct GlobalTop {
+    pub data: String,
+}
 pub struct MarkovAll {
     pub data: String,
 }
@@ -328,6 +334,84 @@ impl Execute for Top {
         {
             Ok(_) => debug!("/top command sent to {}", message.chat.id()),
             Err(_) => warn!("/top command sent failed to {}", message.chat.id()),
+        }
+        Ok(())
+    }
+
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        unimplemented!()
+    }
+
+    #[allow(unused_variables)]
+    async fn exec_mystem(
+        &self,
+        api: &Api,
+        message: &Message,
+        mystem: &mut MyStem,
+    ) -> Result<(), Error> {
+        unimplemented!()
+    }
+}
+
+#[async_trait]
+impl Execute for GlobalTop {
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
+        let top = db::get_global_top().await?;
+        let mut msg = "<b>Global top words:</b>\n<pre>".to_string();
+        let mut counter = 1;
+        for word in top.iter() {
+            msg = format!(
+                "{} <b>{}</b> {} - {}\n",
+                msg, counter, word.word, word.count
+            );
+            counter += 1;
+        }
+        msg = format!("{}{}", msg, "</pre>");
+        match api
+            .send(message.text_reply(msg).parse_mode(ParseMode::Html))
+            .await
+        {
+            Ok(_) => debug!("/global_top command sent to {}", message.chat.id()),
+            Err(_) => warn!("/global_top command sent failed to {}", message.chat.id()),
+        }
+        Ok(())
+    }
+
+    async fn exec_with_result(&self, api: &Api, message: &Message) -> Result<String, Error> {
+        unimplemented!()
+    }
+
+    #[allow(unused_variables)]
+    async fn exec_mystem(
+        &self,
+        api: &Api,
+        message: &Message,
+        mystem: &mut MyStem,
+    ) -> Result<(), Error> {
+        unimplemented!()
+    }
+}
+
+#[async_trait]
+impl Execute for ConfTop {
+    async fn exec(&self, api: &Api, message: &Message) -> Result<(), Error> {
+        let top = db::get_conf_top(&message).await?;
+        let mut msg = "<b>Conf top words:</b>\n<pre>".to_string();
+        let mut counter = 1;
+        for word in top.iter() {
+            msg = format!(
+                "{} <b>{}</b> {} - {}\n",
+                msg, counter, word.word, word.count
+            );
+            counter += 1;
+        }
+        msg = format!("{}{}", msg, "</pre>");
+        match api
+            .send(message.text_reply(msg).parse_mode(ParseMode::Html))
+            .await
+        {
+            Ok(_) => debug!("/conf_top command sent to {}", message.chat.id()),
+            Err(_) => warn!("/conf_top command sent failed to {}", message.chat.id()),
         }
         Ok(())
     }
@@ -676,7 +760,7 @@ impl Execute for Code {
             .collect();
 
         let theme = if theme.len() != 1 {
-            ts.themes.get("Dracula").unwrap()
+            ts.themes.get("gruvbox").unwrap()
         } else {
             theme[0]
         };

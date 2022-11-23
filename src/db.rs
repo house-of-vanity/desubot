@@ -512,3 +512,56 @@ pub(crate) async fn get_top(
     }
     Ok(top)
 }
+
+pub(crate) async fn get_global_top() -> Result<Vec<TopWord>, errors::Error> {
+    let conn = open()?;
+    let mut stmt = conn.prepare_cached(
+        "
+        SELECT w.word, COUNT(*) as count FROM relations r
+        LEFT JOIN word w ON w.id = r.word_id
+        GROUP BY w.word
+        ORDER BY count DESC
+        LIMIT 50
+    ",
+    )?;
+
+    let mut rows = stmt.query_named(named_params! {})?;
+    let mut top = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        top.push(TopWord {
+            word: row.get(0)?,
+            count: row.get(1)?,
+        })
+    }
+    Ok(top)
+}
+
+pub(crate) async fn get_conf_top(
+    message: &telegram_bot::Message,
+) -> Result<Vec<TopWord>, errors::Error> {
+    let conf_id = i64::from(message.chat.id());
+
+    let conn = open()?;
+    let mut stmt = conn.prepare_cached(
+        "
+        SELECT w.word, COUNT(*) as count FROM relations r
+        LEFT JOIN word w ON w.id = r.word_id
+        WHERE r.conf_id = :conf_id
+        GROUP BY w.word
+        ORDER BY count DESC
+        LIMIT 10
+    ",
+    )?;
+
+    let mut rows = stmt.query_named(named_params! {":conf_id": conf_id})?;
+    let mut top = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        top.push(TopWord {
+            word: row.get(0)?,
+            count: row.get(1)?,
+        })
+    }
+    Ok(top)
+}

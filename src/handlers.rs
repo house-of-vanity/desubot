@@ -1,5 +1,7 @@
 //use crate::commands::Command;
-use crate::commands::{Code, Execute, Here, Markov, MarkovAll, Omedeto, Scheme, Sql, Top};
+use crate::commands::{
+    Code, ConfTop, Execute, GlobalTop, Here, Markov, MarkovAll, Omedeto, Scheme, Sql, Top,
+};
 use crate::db;
 use crate::errors;
 use crate::utils;
@@ -77,6 +79,7 @@ pub async fn handler(
                     || s.contains("/хере")
                     || s.contains("@хере")
                     || s.contains("@all")
+                    || s.contains("\"руку")
                     || s.contains("\"хере") =>
                 {
                     db::add_sentence(&message, mystem).await?;
@@ -108,15 +111,22 @@ pub async fn handler(
                             .await?;
                     }
                 },
-                "/top" => {
+                "/top" | "/stat" => {
                     Top {
                         data: "".to_string(),
                     }
                     .exec(&api, &message)
                     .await?
                 }
-                "/stat" => {
-                    Top {
+                "/global_top" | "/global_stat" => {
+                    GlobalTop {
+                        data: "".to_string(),
+                    }
+                    .exec(&api, &message)
+                    .await?
+                }
+                "/conf_stat" | "/conf_top" => {
+                    ConfTop {
                         data: "".to_string(),
                     }
                     .exec(&api, &message)
@@ -136,7 +146,7 @@ pub async fn handler(
                     .exec(&api, &message)
                     .await?
                 }
-                s if s =="/scheme" || s == "/schema" => {
+                s if s == "/scheme" || s == "/schema" => {
                     Scheme {
                         data: "".to_string(),
                     }
