@@ -20,17 +20,6 @@ jobs:
           name: desubot
           path: ./target/release/desubot
 
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build
-        run: cargo build --verbose --release
-      - name: Upload Windows binary
-        uses: actions/upload-artifact@v1
-        with:
-          name: desubot.exe
-          path: ./target/release/desubot.exe
   build-push-docker:
     runs-on: ubuntu-latest
     steps:
