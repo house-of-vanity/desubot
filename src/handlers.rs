@@ -140,13 +140,23 @@ pub async fn handler(
                     .await?
                 }
                 "/markov" => {
-                    Markov {
-                        data: "".to_string(),
+                    if title != "PRIVATE" {
+                        Markov {
+                            data: "".to_string(),
+                        }
+                        .exec(&api, &message)
+                        .await?
+                    } else {
+                        let _ = api
+                            .send(
+                                message
+                                    .text_reply("Allowed in groups only")
+                                    .parse_mode(ParseMode::Html),
+                            )
+                            .await?;
                     }
-                    .exec(&api, &message)
-                    .await?
                 }
-                s if s == "/scheme" || s == "/schema" => {
+                "/scheme" | "/schema" => {
                     Scheme {
                         data: "".to_string(),
                     }
