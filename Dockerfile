@@ -5,7 +5,7 @@ WORKDIR /desubot
 ADD ./ /desubot/
 RUN cargo build --release
 
-FROM ubuntu:latest
+FROM ubuntu:20.04
 WORKDIR /storage
 COPY --from=builder /desubot/target/release/desubot /usr/bin/
 COPY mystem /usr/bin/
