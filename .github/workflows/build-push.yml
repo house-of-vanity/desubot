@@ -58,7 +58,7 @@ jobs:
 
   publish:
     name: Publish release
-    needs: [build-windows, build-linux]
+    needs: [build-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Get the version (git tag)
@@ -91,11 +91,6 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: desubot
-          path: ./artifacts/
-      - name: Download Windows binary
-        uses: actions/download-artifact@v1
-        with:
-          name: desubot.exe
           path: ./artifacts/
       - name: Upload binary assets
         run: |
