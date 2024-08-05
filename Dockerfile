@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
-FROM rust:latest AS builder
+FROM rust:bookworm AS builder
 WORKDIR /desubot
 ADD ./ /desubot/
 RUN cargo build --release
 
-FROM ubuntu:20.04
+FROM debian:bookworm
 WORKDIR /storage
 COPY --from=builder /desubot/target/release/desubot /usr/bin/
 COPY mystem /usr/bin/
