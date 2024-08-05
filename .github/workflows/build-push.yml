@@ -84,7 +84,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      - name: Upload binary assets
+      - name: Prepare release downloading
         run: |
           mkdir artifacts
       - name: Download Linux binary
@@ -92,17 +92,26 @@ jobs:
         with:
           name: desubot
           path: ./artifacts/
-      - name: Upload binary assets
-        run: |
-          wget https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2
-          tar xjf linux-amd64-github-release.tar.bz2
-          export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          for artifact in ./artifacts/*; do
-             ./bin/linux/amd64/github-release upload \
-             -u ${{ steps.get_repo_data.outputs.AUTHOR }} \
-             -r ${{ steps.get_repo_data.outputs.REPO_NAME }} \
-             --tag ${{ steps.get_version.outputs.FULL_TAG }} \
-             --name ${artifact} \
-             --file ${artifact}
-          done
+#     - name: Upload binary assets
+#       run: |
+#         wget https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2
+#         tar xjf linux-amd64-github-release.tar.bz2
+#         export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+#         for artifact in ./artifacts/*; do
+#            ./bin/linux/amd64/github-release upload \
+#            -u ${{ steps.get_repo_data.outputs.AUTHOR }} \
+#            -r ${{ steps.get_repo_data.outputs.REPO_NAME }} \
+#            --tag ${{ steps.get_version.outputs.FULL_TAG }} \
+#            --name ${artifact} \
+#            --file ${artifact}
+#         done
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.publish.outputs.upload_url }}
+          asset_path: ./artifacts/*
+          asset_name: desubot-linux-amd64
+          asset_content_type: application/octet-stream
 
