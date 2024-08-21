@@ -1,19 +1,26 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhouse-of-vanity%2Fdesubot.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhouse-of-vanity%2Fdesubot?ref=badge_shield)
 
-Desubot
-Telegram bot with light group statistic and heavy spy features.
+# Desubot Telegram Bot
 
-== Features ==
-* Collect all the messages sent to group.
-* Collect all the media sent to group including voice, stickers, video, video notes, documents.
-* /here command to mention all members.
-* Alongside with saving whole message bot perform blacklist filter and stemming for every word (only Russian). "Красивую собаку мыли негры" -> "красивый собака мыть негр"
-* Generate sentences using Markov Chains trained on history with /markov_all.
-* Syntax highlighting for CODE exported to image.
+**Desubot** is a Telegram bot with light group statistics and powerful spy features.
 
-== Important ==
-* Desubot uses MyStem by Yandex for word stemming and assume that mystem binary is available in PATH.
-* ubuntu deps: libssl-dev libsqlite3-dev cmake libfreetype-dev pkg-config
+## Features
+
+- **Collect all messages**: The bot collects all messages sent to the group.
+- **Collect all media**: The bot saves all media sent to the group, including voice messages, stickers, videos, video notes, and documents.
+- **/here command**: Mention all group members.
+- **Blacklist filter and stemming**: The bot saves the entire message, performs blacklist filtering, and stems every word (Russian only). For example, "Красивую собаку мыли негры" -> "красивый собака мыть негр".
+- **Markov Chain sentence generation**: The bot generates sentences using Markov Chains trained on the history with the `/markov_all` command.
+- **Syntax highlighting for CODE**: Export code with syntax highlighting to an image.
+
+## Important
+
+- **MyStem**: Desubot uses MyStem by Yandex for word stemming and assumes that the `mystem` binary is available in the PATH.
+- **Ubuntu dependencies**: The following packages are required:
+
+  ```bash
+  libssl-dev libsqlite3-dev cmake libfreetype-dev pkg-config
+
 
 [Docker Hub](https://hub.docker.com/repository/docker/ultradesu/desubot/general)
 
