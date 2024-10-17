@@ -477,7 +477,8 @@ impl Execute for Markov {
         chain.feed(messages);
         let mut sentences = chain.generate();
         let mut msg = String::new();
-        for _ in 1..rand::thread_rng().gen_range(2, 10) {
+        let count = rand::thread_rng().gen_range(3..10); 
+        for _ in 1..count {
             msg = format!("{} {}", msg, sentences.pop().unwrap_or(" ".into()));
         }
         match api
