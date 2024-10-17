@@ -439,7 +439,7 @@ impl Execute for MarkovAll {
         chain.feed(messages);
         let mut sentences = chain.generate();
         let mut msg = String::new();
-        for _ in 1..rand::thread_rng().gen_range(2, 10) {
+        for _ in 1..rand::thread_rng().gen_range(2..10) {
             msg = format!("{} {}", msg, sentences.pop().unwrap());
         }
         match api
@@ -477,7 +477,7 @@ impl Execute for Markov {
         chain.feed(messages);
         let mut sentences = chain.generate();
         let mut msg = String::new();
-        for _ in 1..5 {
+        for _ in 1..rand::thread_rng().gen_range(2..10) {
             msg = format!("{} {}", msg, sentences.pop().unwrap_or(" ".into()));
         }
         match api
